@@ -27,7 +27,7 @@ var JOB_END_TIME = '10:15 PM';		// GMT in Daylight Saving, "11:15 PM" not in Day
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
 Parse.Cloud.define("hello", function(request, response) {
-  response.success("Hello world ... ...");
+  response.success("Hello world from " + process.env.APP_NAME);
 });
 
 // Send a "Want to become an observer" email via Mailgun
