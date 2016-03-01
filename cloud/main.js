@@ -5,8 +5,8 @@
  */
 
 var _ = require('underscore');
-var SUPERUSER = "superuser";
-var SUPERPASSWORD = "Passw0rd";
+var SUPERUSER = process.env.SUPER_USER;
+var SUPERPASSWORD = process.env.SUPER_USER_PASS;
 var NULL_VAL_INT = -1;
 var NULL_VAL_DBL = -1.0;
  
@@ -28,6 +28,11 @@ var JOB_END_TIME = '10:15 PM';		// GMT in Daylight Saving, "11:15 PM" not in Day
 // For example:
 Parse.Cloud.define("hello", function(request, response) {
   response.success("Hello world from " + process.env.APP_NAME);
+});
+
+Parse.Cloud.define("getDateInAEST", function(request, response) {
+  var currentDateInAEST = getTodayString(_IS_DAYLIGHT_SAVING);
+  response.success("Current Date in AEST: '" + currentDateInAEST + "'");
 });
 
 // Send a "Want to become an observer" email via Mailgun

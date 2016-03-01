@@ -17,7 +17,8 @@ var api = new ParseServer({
   appId: process.env.APP_ID || 'myAppId',
   restAPIKey: process.env.REST_API_KEY || '',
   javascriptKey: process.env.JAVASCRIPT_KEY || '',
-  masterKey: process.env.MASTER_KEY || '' //Add your master key here. Keep it secret!
+  masterKey: process.env.MASTER_KEY || '', //Add your master key here. Keep it secret!
+  serverURL: process.env.SERVER_URL || 'http://localhost:1337'  // Don't forget to change to https if needed
 });
 // Client-keys like the javascript key or the .NET key are not necessary with parse-server
 // If you wish you require them, you can set them as options in the initialization above:
@@ -37,5 +38,5 @@ app.get('/', function(req, res) {
 
 var port = process.env.PORT || 1337;
 app.listen(port, function() {
-    console.log('parse-server-example running on port ' + port + '.');
+    console.log(process.env.APP_NAME + ' running on port ' + port + '.');
 });
