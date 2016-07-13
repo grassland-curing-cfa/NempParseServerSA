@@ -1,7 +1,10 @@
 /*
- * Cloud code for NempParseServerSA connected to the "nemp_sa_test" MongoLab DB deployed on Heroku
- * Initial checkin date: 23/02/2016
- * https://nemp-sa-test.herokuapp.com/parse/
+ * Cloud code for "nemp-sa-dev" connected to the "nemp_dev_sa" MongoLab DB deployed on Heroku
+ * Git repo: 				https://github.com/grassland-curing-cfa/NempParseServerSA
+ * Heroku app: 				nemp-sa-dev
+ * Initial checkin date: 		23/02/2016
+ * Following-up check date:	13/07/2016
+ * https://nemp-sa-dev.herokuapp.com/parse/
  */
 
 var _ = require('underscore');
@@ -12,15 +15,17 @@ var NULL_VAL_DBL = -1.0;
  
 var APP_ID = process.env.APP_ID;
 var MASTER_KEY = process.env.MASTER_KEY;
+var SERVER_URL = process.env.SERVER_URL;		// https://nemp-sa-dev.herokuapp.com/parse
  
-var MG_DOMAIN = 'sandbox72753f1629ce4624804952fa8953d193.mailgun.org';
-var MG_KEY = 'key-ef9829f1ee460b7753bd7e8589aa7964';
+var MG_DOMAIN = process.env.MG_DOMAIN;
+var MG_KEY = process.env.MG_KEY;
 var CFA_NEMP_EMAIL = 'grasslandcuring-nemp@cfa.vic.gov.au';
 var CFA_GL_TEAM_EMAIL = 'grassland-team@cfa.vic.gov.au';
 var CFA_GL_EMAIL = 'grassland@cfa.vic.gov.au';
 var _IS_DAYLIGHT_SAVING = true;		// boolean indicates if it is now in Daylight Saving time
 var JOB_START_TIME = '09:45 PM';	// GMT in Daylight Saving, "10:45 PM" not in Daylight Saving
 var JOB_END_TIME = '10:15 PM';		// GMT in Daylight Saving, "11:15 PM" not in Daylight Saving
+var MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
 
 //var SHARED_WITH_STATES = ["VIC", "QLD", "NSW"];
 
@@ -35,11 +40,105 @@ Parse.Cloud.define("getDateInAEST", function(request, response) {
   response.success("Current Date in AEST: '" + currentDateInAEST + "'");
 });
 
+Parse.Cloud.define("testMailgunJS", function(request, response) {
+  var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+  
+  var data = {
+    from: 'Excited User <me@samples.mailgun.org>',
+    to: 'a.chen@cfa.vic.gov.au',
+    bcc: 'tttchen2004@yahoo.com',
+    subject: 'Hello from ' + process.env.SERVER_URL,
+    text: '',
+    html: 'Testing some Mailgun awesomness from <br><h1>' + process.env.SERVER_URL + '</h1>'
+  };
+  
+  mailgun.messages().send(data, function (error, body) {
+    if (error)
+      response.error("" + error);    
+    else
+      response.success(body);
+  });
+});
+
+// Parse.com Job for sending Request for Validation email
+Parse.Cloud.job("jobRequestForValidation", function(request, status) {
+	status.message("Scheduled Job [jobRequestForValidation] being executed...");
+	
+	if (isToSendRequestForValidationEmail()) {
+	
+		var toPerson = request.params.toPerson;
+		var toEmail = request.params.toEmail;
+		
+		var Mailgun = require('mailgun');
+		Mailgun.initialize(MG_DOMAIN, MG_KEY);
+		
+		var html = '<!DOCTYPE html><html>' + 
+			'<head>' + 
+			'<title>Request For Validation</title>' + 
+			'<style>' + 
+			'p, li {margin:0cm; margin-bottom:.0001pt; font-size:11.0pt; font-family:"Calibri","sans-serif";}' + 
+			'</style>' + 
+			'</head>' + 
+			'<body>' + 
+			'<p>Good morning ' + toPerson + ',</p>' + 
+			'<br>' + 
+			'<p>Grassland curing data for South Australia is now ready for checking. To validate the ground observations, please log into the CFS Grassland Curing App ' + 
+			'<a href="http://nemp-sa.appspot.com">http://nemp-sa.appspot.com</a>.</p>' + 
+			'<br>' + 
+			'<p>To use the system:</p>' + 
+			'<br>' + 
+			'<ul>' + 
+			'<li>Log in with the username and password provided to you (Please make sure you use Internet Explorer 9 or above, Firefox or Google Chrome)</li>' + 
+			'<li>Make sure you are in the system as a "Validator". You may need to select "Validator" from the drop-down list on the top right corner (if you have multiple roles assigned).</li>' + 
+			'<li>Click "Validate Observations"</li>' + 
+			'<li>Click on your region or district</li>' + 
+			'<li>Amend the curing value using the drop-down box for each location</li>' + 
+			'<li>Click the "Back" button to return to the main page</li>' + 
+			'<li>Log out</li>' + 
+			'</ul>' + 
+			'<br>' + 
+			'<p>You can also access the "Help" button at the bottom of the main page.</p>' + 
+			'<br>' + 
+			'<p>If you have any questions, please contact us (Susan - 03 8822 8059; Danni - 03 8822 8073; Alex - 03 8822 8060; Rachel - 03 9262 8607).</p>' + 
+			'<br>' + 
+			'<p>Kind Regards,</p>' + 
+			'<br>' + 
+			'<p>The NEMP Grassland Curing Team</p>' + 
+			'<br>' + 
+			'<table><tr><td width="30%"><img src="http://www.cfa.vic.gov.au/img/logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
+			'<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
+			'<p>E: <a href="mailto:grasslandcuring-nemp@cfa.vic.gov.au" target="_top">grasslandcuring-nemp@cfa.vic.gov.au</a></p></td></tr></table>' + 
+			'<br>' + 
+			'<p><i>Note: This email has been generated automatically by the CFS Grassland Curing App. Please do not reply to this email.</i></p>' + 
+			'</body>' + 
+			'</html>';
+		
+		Mailgun.sendEmail({
+			  to: toEmail,
+			  //cc: CFA_NEMP_EMAIL,
+			  from: CFA_NEMP_EMAIL,
+			  subject: "South Australia - Grassland Curing Validation Notification",
+			  text: "",
+			  html: html
+			}, {
+			  success: function(httpResponse) {
+			    console.log(httpResponse);
+			    status.success("Request for Validation email sent successfully.");
+			  },
+			  error: function(httpResponse) {
+			    console.error(httpResponse);
+			    status.error("Uh oh, something went wrong with sending Request for Validation email.");
+			  }
+		});
+	} else {
+		status.success("Job executed but Request for Validation email NOT sent due to invalid date and time.");
+	}
+});
+
 // Send a "Want to become an observer" email via Mailgun
 Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) {
-	
-	var Mailgun = require('mailgun');
-	Mailgun.initialize(MG_DOMAIN, MG_KEY);
+	var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+
 	
 	var firstname = request.params.fn;
 	var lastname = request.params.ln;
@@ -65,6 +164,7 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
 	'</body>' + 
 	'</html>';
 	
+	/*
 	Mailgun.sendEmail({
 		  to: CFA_NEMP_EMAIL,
 		  from: CFA_NEMP_EMAIL,
@@ -81,13 +181,24 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
 		    response.error("Uh oh, something went wrong");
 		  }
 		});
+	*/
+	mailgun.messages().send({
+      	to: CFA_NEMP_EMAIL,
+		from: CFA_NEMP_EMAIL,
+           subject: "Express of Interest to become a grassland curing observer",
+      text: '',
+      html: html1
+    }, function (error, body) {
+      if (error)
+        response.error("" + error);    
+      else
+        response.success(body);
+});
 });
 
 //Send a "Welcome email to new user upon signed-up" via Mailgun
 Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
-	
-	var Mailgun = require('mailgun');
-	Mailgun.initialize(MG_DOMAIN, MG_KEY);
+	var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
 	
 	var firstname = request.params.fn;
 	var lastname = request.params.ln;
@@ -127,6 +238,7 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
 	'</body>' + 
 	'</html>';
 	
+/*
 	Mailgun.sendEmail({
 		  to: email,
 		  bcc: CFA_NEMP_EMAIL,
@@ -144,6 +256,20 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
 		    response.error("Uh oh, something went wrong");
 		  }
 		});
+	*/
+	mailgun.messages().send({
+      	to: email,
+		bcc: CFA_NEMP_EMAIL,
+		from: CFA_NEMP_EMAIL,
+		subject: "Welcome to the South Australia Grassland Curing Trial",
+		text: "",
+	html: html
+    }, function (error, body) {
+      if (error)
+        response.error("" + error);    
+      else
+        response.success(body);
+    });
 })
 
 //Send a "finalised map" email to all active observers, validators and administrators via Mailgun
@@ -171,8 +297,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) 
 		}
 		
 		// use Mailgun to send email
-		var Mailgun = require('mailgun');
-		Mailgun.initialize(MG_DOMAIN, MG_KEY);
+		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
 		
 		var strToday = getTodayString(_IS_DAYLIGHT_SAVING);
 		
@@ -186,6 +311,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) 
 		'</body>' + 
 		'</html>';
 		
+		/*
 		Mailgun.sendEmail({
 			  to: CFA_NEMP_EMAIL,
 			  bcc: recipientList,
@@ -203,6 +329,21 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) 
 			    response.error("Uh oh, something went wrong");
 			  }
 		});
+		*/
+		mailgun.messages().send({
+          		to: CFA_NEMP_EMAIL,
+			bcc: recipientList,
+			from: CFA_NEMP_EMAIL,
+			subject: "South Australia CFS Grassland Curing Map - " + strToday,
+			text: "",
+		html: html
+        }, function (error, body) {
+          if (error)
+            response.error("" + error);    
+          else
+            response.success(body);
+        	});
+
 		//response.success(emailList);	
 	}, function(error) {
 	    response.error("GCUR_MMR_USER_ROLE table lookup failed");
@@ -418,7 +559,6 @@ Parse.Cloud.beforeSave("GCUR_LOCATION", function(request, response) {
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
  */
 Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
-	console.log("*** beforeSave on GCUR_OBSERVATION called");
 	Parse.Cloud.useMasterKey();
 	sharedWithJurisArr = [];
 	
@@ -429,7 +569,6 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 		sharedJurisSettingsQ.find().then(function(sjsObjs) {
 			for (var i = 0; i < sjsObjs.length; i ++) {
 				var jurisdiction = sjsObjs[i].get("Jurisdiction");
-				console.log("*** jurisdiction:" + jurisdiction);
 				sharedWithJurisArr.push(jurisdiction);
 			}
 			
@@ -468,59 +607,66 @@ Parse.Cloud.define("getPrevSimpleObsSharedInfoForState", function(request, respo
 	queryObservation.find().then(function(obs) {
 		//console.log("obs.length=" + obs.length);
 		for (var j = 0; j < obs.length; j ++) {
-			var loc = obs[j].get("Location");
-			var isShareable = loc.get("Shareable");
-			var locStatus = loc.get("LocationStatus");
-			
-			// We only retrieve obs curing for locations that are shareable
-			if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
-				var locObjId = loc.id;
-				var locName = loc.get("LocationName");
-				var distNo = loc.get("DistrictNo");
-				var locLat = loc.get("Lat");
-				var locLng = loc.get("Lng");
+			// check if FinalisedDate is 30 days away
+			var isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
+			if (!isPrevObsTooOld) {
+				var loc = obs[j].get("Location");
+				var isShareable = loc.get("Shareable");
+				var locStatus = loc.get("LocationStatus");
 				
-				var obsObjId = obs[j].id;
-				
-				var prevOpsCuring, prevOpsDate;
-				if (obs[j].has("AdminCuring")) {
-					prevOpsCuring = obs[j].get("AdminCuring");
-					prevOpsDate = obs[j].get("AdminDate");
-				} else if (obs[j].has("ValidatorCuring")) {
-					prevOpsCuring = obs[j].get("ValidatorCuring");
-					prevOpsDate = obs[j].get("ValidationDate");
-				} else {
-					prevOpsCuring = obs[j].get("AreaCuring");
-					prevOpsDate = obs[j].get("ObservationDate");
-				}
-				
-				// In Array; convert raw string to JSON Array
-				// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
-				if (obs[j].has("SharedBy")) {
+				// We only retrieve obs curing for locations that are shareable
+				if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
+					var locObjId = loc.id;
+					var locName = loc.get("LocationName");
+					var distNo = loc.get("DistrictNo");
+					var locLat = loc.get("Lat");
+					var locLng = loc.get("Lng");
 					
-					var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
+					var obsObjId = obs[j].id;
 					
-					var isSharedByState;
+					var prevOpsCuring, prevOpsDate;
+					if (obs[j].has("AdminCuring")) {
+						prevOpsCuring = obs[j].get("AdminCuring");
+						prevOpsDate = obs[j].get("AdminDate");
+					} else if (obs[j].has("ValidatorCuring")) {
+						prevOpsCuring = obs[j].get("ValidatorCuring");
+						prevOpsDate = obs[j].get("ValidationDate");
+					} else {
+						prevOpsCuring = obs[j].get("AreaCuring");
+						prevOpsDate = obs[j].get("ObservationDate");
+					}
 					
-					for (var p = 0; p < sharedByInfo.length; p ++) {
-						if (sharedByInfo[p]["st"] == stateName) {
-							isSharedByState = sharedByInfo[p]["sh"];
-							
-							var returnedItem = {
-								"obsObjId" : obsObjId,
-								"locObjId"	: locObjId,
-								"locName" : locName,
-								"locStatus" : locStatus,
-								"distNo" : distNo,
-								"isSharedByState" : isSharedByState,
-								"prevOpsCuring" : prevOpsCuring,
-								"prevOpsDate" : prevOpsDate,
-								"lat" : locLat,
-								"lng" : locLng
-							};
-							
-							sharedInfos.push(returnedItem);
-							break;
+					var finalisedDate = obs[j].get("FinalisedDate");
+	
+					// In Array; convert raw string to JSON Array
+					// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
+					if (obs[j].has("SharedBy")) {
+						
+						var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
+						
+						var isSharedByState;
+						
+						for (var p = 0; p < sharedByInfo.length; p ++) {
+							if (sharedByInfo[p]["st"] == stateName) {
+								isSharedByState = sharedByInfo[p]["sh"];
+								
+								var returnedItem = {
+									"obsObjId" : obsObjId,
+									"locObjId"	: locObjId,
+									"locName" : locName,
+									"locStatus" : locStatus,
+									"distNo" : distNo,
+									"isSharedByState" : isSharedByState,
+									"prevOpsCuring" : prevOpsCuring,
+									"prevOpsDate" : prevOpsDate,
+									"lat" : locLat,
+									"lng" : locLng,
+									"finalisedDate" : finalisedDate
+								};
+								
+								sharedInfos.push(returnedItem);
+								break;
+							}
 						}
 					}
 				}
@@ -556,49 +702,53 @@ Parse.Cloud.define("getSharedPrevCuringForStateForInputToVISCA", function(reques
 	queryObservation.find().then(function(obs) {
 		//console.log("obs.length=" + obs.length);
 		for (var j = 0; j < obs.length; j ++) {
-			var loc = obs[j].get("Location");
-			var isShareable = loc.get("Shareable");
-			var locStatus = loc.get("LocationStatus");
-			
-			// We only retrieve obs curing for locations that are shareable
-			if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
-				var locObjId = loc.id;
-				var locName = loc.get("LocationName");
-				var locLat = loc.get("Lat");
-				var locLng = loc.get("Lng");
+			// check if FinalisedDate is 30 days away
+			var isPrevObsTooOld = isObsTooOld(obs[j].get("FinalisedDate"));
+			if (!isPrevObsTooOld) {
+				var loc = obs[j].get("Location");
+				var isShareable = loc.get("Shareable");
+				var locStatus = loc.get("LocationStatus");
 				
-				var obsObjId = obs[j].id;
-				
-				var prevOpsCuring;
-				if (obs[j].has("AdminCuring")) {
-					prevOpsCuring = obs[j].get("AdminCuring");
-				} else if (obs[j].has("ValidatorCuring")) {
-					prevOpsCuring = obs[j].get("ValidatorCuring");
-				} else {
-					prevOpsCuring = obs[j].get("AreaCuring");
-				}
-				
-				// In Array; convert raw string to JSON Array
-				// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
-				if (obs[j].has("SharedBy")) {
+				// We only retrieve obs curing for locations that are shareable
+				if ( isShareable && (locStatus.toLowerCase() != "suspended") ) {
+					var locObjId = loc.id;
+					var locName = loc.get("LocationName");
+					var locLat = loc.get("Lat");
+					var locLng = loc.get("Lng");
 					
-					var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
+					var obsObjId = obs[j].id;
 					
-					var isSharedByState;
+					var prevOpsCuring;
+					if (obs[j].has("AdminCuring")) {
+						prevOpsCuring = obs[j].get("AdminCuring");
+					} else if (obs[j].has("ValidatorCuring")) {
+						prevOpsCuring = obs[j].get("ValidatorCuring");
+					} else {
+						prevOpsCuring = obs[j].get("AreaCuring");
+					}
 					
-					for (var p = 0; p < sharedByInfo.length; p ++) {
-						if ( (sharedByInfo[p]["st"] == stateName) && (sharedByInfo[p]["sh"]) ) {
-							var sharedObs = {
-								"obsObjId" : obsObjId,
-								"locObjId"	: locObjId,
-								"locName" : locName,
-								"bestCuring" : prevOpsCuring,
-								"lat" : locLat,
-								"lng" : locLng
-							};
-							
-							sharedObsArr.push(sharedObs);
-							break;
+					// In Array; convert raw string to JSON Array
+					// For example, "[{"st":"VIC","sh":false},{"st":"QLD","sh":true},{"st":"NSW","sh":true}]"
+					if (obs[j].has("SharedBy")) {
+						
+						var sharedByInfo = JSON.parse(obs[j].get("SharedBy"));
+						
+						var isSharedByState;
+						
+						for (var p = 0; p < sharedByInfo.length; p ++) {
+							if ( (sharedByInfo[p]["st"] == stateName) && (sharedByInfo[p]["sh"]) ) {
+								var sharedObs = {
+									"obsObjId" : obsObjId,
+									"locObjId"	: locObjId,
+									"locName" : locName,
+									"bestCuring" : prevOpsCuring,
+									"lat" : locLat,
+									"lng" : locLng
+								};
+								
+								sharedObsArr.push(sharedObs);
+								break;
+							}
 						}
 					}
 				}
@@ -752,7 +902,7 @@ Parse.Cloud.beforeDelete("GCUR_RUNMODEL", function(request, response) {
     console.log(file.name());
     Parse.Cloud.httpRequest({
       method: 'DELETE',
-      url: "https://api.parse.com/1/files/" + fileName,
+      url: SERVER_URL + "/files/" + fileName,
       headers: {
         "X-Parse-Application-Id": APP_ID,
         "X-Parse-Master-Key" : MASTER_KEY
@@ -784,7 +934,7 @@ Parse.Cloud.beforeDelete("GCUR_FINALISEMODEL", function(request, response) {
     console.log(file.name());
     Parse.Cloud.httpRequest({
       method: 'DELETE',
-      url: "https://api.parse.com/1/files/" + fileName,
+      url: SERVER_URL + "/files/" + fileName,
       headers: {
         "X-Parse-Application-Id": APP_ID,
         "X-Parse-Master-Key" : MASTER_KEY
@@ -1431,13 +1581,17 @@ Parse.Cloud.define("getSimpleObservationsForUser", function(request, response) {
 								if (results.length > 0) {
 									// Only previous observation exists for the Location
 									if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
-										// results[0] is GCUR_OBSERVATION for previous observation										
-										if (results[0].has("AdminCuring")) {
-											prevOpsCuring = results[0].get("AdminCuring");
-										} else if (results[0].has("ValidatorCuring")) {
-											prevOpsCuring = results[0].get("ValidatorCuring");
-										} else {
-											prevOpsCuring = results[0].get("AreaCuring");
+										// results[0] is GCUR_OBSERVATION for previous observation
+										// check if FinalisedDate is 30 days away
+										var isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
+										if (!isPrevObsTooOld) {
+											if (results[0].has("AdminCuring")) {
+												prevOpsCuring = results[0].get("AdminCuring");
+											} else if (results[0].has("ValidatorCuring")) {
+												prevOpsCuring = results[0].get("ValidatorCuring");
+											} else {
+												prevOpsCuring = results[0].get("AreaCuring");
+											}
 										}
 									} else {
 										// current observation exists
@@ -1453,13 +1607,18 @@ Parse.Cloud.define("getSimpleObservationsForUser", function(request, response) {
 											validated = "validated";
 										
 										if (results.length == 2) {
-											// results[1] is GCUR_OBSERVATION for previous observation										
-											if (results[1].has("AdminCuring")) {
-												prevOpsCuring = results[1].get("AdminCuring");
-											} else if (results[1].has("ValidatorCuring")) {
-												prevOpsCuring = results[1].get("ValidatorCuring");
-											} else {
-												prevOpsCuring = results[1].get("AreaCuring");
+											// results[1] is GCUR_OBSERVATION for previous observation
+											
+											// check if FinalisedDate is 30 days away
+											var isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
+											if (!isPrevObsTooOld) {
+												if (results[1].has("AdminCuring")) {
+													prevOpsCuring = results[1].get("AdminCuring");
+												} else if (results[1].has("ValidatorCuring")) {
+													prevOpsCuring = results[1].get("ValidatorCuring");
+												} else {
+													prevOpsCuring = results[1].get("AreaCuring");
+												}
 											}
 										}
 									}
@@ -1548,13 +1707,18 @@ Parse.Cloud.define("getSimpleObservationsForUser", function(request, response) {
 								if (results.length > 0) {
 									// Only previous observation exists for the Location
 									if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
-										// results[0] is GCUR_OBSERVATION for previous observation										
-										if (results[0].has("AdminCuring")) {
-											prevOpsCuring = results[0].get("AdminCuring");
-										} else if (results[0].has("ValidatorCuring")) {
-											prevOpsCuring = results[0].get("ValidatorCuring");
-										} else {
-											prevOpsCuring = results[0].get("AreaCuring");
+										// results[0] is GCUR_OBSERVATION for previous observation
+										
+										// check if FinalisedDate is 30 days away
+										var isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
+										if (!isPrevObsTooOld) {
+											if (results[0].has("AdminCuring")) {
+												prevOpsCuring = results[0].get("AdminCuring");
+											} else if (results[0].has("ValidatorCuring")) {
+												prevOpsCuring = results[0].get("ValidatorCuring");
+											} else {
+												prevOpsCuring = results[0].get("AreaCuring");
+											}
 										}
 									} else {
 										// current observation exists
@@ -1570,13 +1734,18 @@ Parse.Cloud.define("getSimpleObservationsForUser", function(request, response) {
 											validated = "validated";
 										
 										if (results.length == 2) {
-											// results[1] is GCUR_OBSERVATION for previous observation										
-											if (results[1].has("AdminCuring")) {
-												prevOpsCuring = results[1].get("AdminCuring");
-											} else if (results[1].has("ValidatorCuring")) {
-												prevOpsCuring = results[1].get("ValidatorCuring");
-											} else {
-												prevOpsCuring = results[1].get("AreaCuring");
+											// results[1] is GCUR_OBSERVATION for previous observation
+											
+											// check if FinalisedDate is 30 days away
+											var isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
+											if (!isPrevObsTooOld) {
+												if (results[1].has("AdminCuring")) {
+													prevOpsCuring = results[1].get("AdminCuring");
+												} else if (results[1].has("ValidatorCuring")) {
+													prevOpsCuring = results[1].get("ValidatorCuring");
+												} else {
+													prevOpsCuring = results[1].get("AreaCuring");
+												}
 											}
 										}
 									}
@@ -1814,42 +1983,47 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 			// Only previous observation exists for the Location
 			if ((results.length == 1) && (results[0].get("ObservationStatus") == 1)) {
 				// results[0] is GCUR_OBSERVATION for previous observation
-				prevObservationObjectId = results[0].id;
-				if (results[0].has("PointCuring"))
-					prevPointCuring = results[0].get("PointCuring");
-				if (results[0].has("PointHeight"))
-					prevPointHeight = results[0].get("PointHeight");
-				if (results[0].has("PointCover"))
-					prevPointCover = results[0].get("PointCover");
-				if (results[0].has("PointFuelLoad"))
-					prevPointFuelLoad = results[0].get("PointFuelLoad");
-				if (results[0].has("AreaCuring"))
-					prevAreaCuring = results[0].get("AreaCuring");
-				if (results[0].has("AreaHeight"))
-					prevAreaHeight = results[0].get("AreaHeight");
-				if (results[0].has("AreaCover"))
-					prevAreaCover = results[0].get("AreaCover");
-				if (results[0].has("AreaFuelLoad"))
-					prevAreaFuelLoad = results[0].get("AreaFuelLoad");
-				if (results[0].has("UserFuelLoad"))
-					prevUserFuelLoad = results[0].get("UserFuelLoad");
-				if (results[0].has("Rainfall"))
-					prevRainfall = results[0].get("Rainfall");
-				if (results[0].has("RateOfDrying")) {
-					var prevRateOfDrying = results[0].get("RateOfDrying");
-					prevRodObjectId = prevRateOfDrying.id;
-				}
 				
-				if (results[0].has("AdminCuring")) {
-					prevOpsCuring = results[0].get("AdminCuring");
-				} else if (results[0].has("ValidatorCuring")) {
-					prevOpsCuring = results[0].get("ValidatorCuring");
+				// check if FinalisedDate is 30 days away
+				var isPrevObsTooOld = isObsTooOld(results[0].get("FinalisedDate"));
+				if (!isPrevObsTooOld) {
+					prevObservationObjectId = results[0].id;
+					if (results[0].has("PointCuring"))
+						prevPointCuring = results[0].get("PointCuring");
+					if (results[0].has("PointHeight"))
+						prevPointHeight = results[0].get("PointHeight");
+					if (results[0].has("PointCover"))
+						prevPointCover = results[0].get("PointCover");
+					if (results[0].has("PointFuelLoad"))
+						prevPointFuelLoad = results[0].get("PointFuelLoad");
+					if (results[0].has("AreaCuring"))
+						prevAreaCuring = results[0].get("AreaCuring");
+					if (results[0].has("AreaHeight"))
+						prevAreaHeight = results[0].get("AreaHeight");
+					if (results[0].has("AreaCover"))
+						prevAreaCover = results[0].get("AreaCover");
+					if (results[0].has("AreaFuelLoad"))
+						prevAreaFuelLoad = results[0].get("AreaFuelLoad");
+					if (results[0].has("UserFuelLoad"))
+						prevUserFuelLoad = results[0].get("UserFuelLoad");
+					if (results[0].has("Rainfall"))
+						prevRainfall = results[0].get("Rainfall");
+					if (results[0].has("RateOfDrying")) {
+						var prevRateOfDrying = results[0].get("RateOfDrying");
+						prevRodObjectId = prevRateOfDrying.id;
+					}
+					
+					if (results[0].has("AdminCuring")) {
+						prevOpsCuring = results[0].get("AdminCuring");
+					} else if (results[0].has("ValidatorCuring")) {
+						prevOpsCuring = results[0].get("ValidatorCuring");
+					}
+					/*
+					else {
+						prevOpsCuring = results[0].get("AreaCuring");
+					}
+					*/
 				}
-				/*
-				else {
-					prevOpsCuring = results[0].get("AreaCuring");
-				}
-				*/
 			} else {			
 				// current observation exists
 				
@@ -1916,42 +2090,47 @@ Parse.Cloud.define("getCurrPrevSimpleObservationsForLocation", function(request,
 				// Previous observation does exist
 				if (results.length == 2) {
 					// results[1] is GCUR_OBSERVATION for previous observation
-					prevObservationObjectId = results[1].id;
-					if (results[1].has("PointCuring"))
-						prevPointCuring = results[1].get("PointCuring");
-					if (results[1].has("PointHeight"))
-						prevPointHeight = results[1].get("PointHeight");
-					if (results[1].has("PointCover"))
-						prevPointCover = results[1].get("PointCover");
-					if (results[1].has("PointFuelLoad"))
-						prevPointFuelLoad = results[1].get("PointFuelLoad");
-					if (results[1].has("AreaCuring"))
-						prevAreaCuring = results[1].get("AreaCuring");
-					if (results[1].has("AreaHeight"))
-						prevAreaHeight = results[1].get("AreaHeight");
-					if (results[1].has("AreaCover"))
-						prevAreaCover = results[1].get("AreaCover");
-					if (results[1].has("AreaFuelLoad"))
-						prevAreaFuelLoad = results[1].get("AreaFuelLoad");
-					if (results[1].has("UserFuelLoad"))
-						prevUserFuelLoad = results[1].get("UserFuelLoad");
-					if (results[1].has("Rainfall"))
-						prevRainfall = results[1].get("Rainfall");
-					if (results[1].has("RateOfDrying")) {
-						var prevRateOfDrying = results[1].get("RateOfDrying");
-						prevRodObjectId = prevRateOfDrying.id;
-					}
 					
-					if (results[1].has("AdminCuring")) {
-						prevOpsCuring = results[1].get("AdminCuring");
-					} else if (results[1].has("ValidatorCuring")) {
-						prevOpsCuring = results[1].get("ValidatorCuring");
-					} 
-					/*
-					else {
-						prevOpsCuring = results[1].get("AreaCuring");
+					// check if FinalisedDate is 30 days away
+					var isPrevObsTooOld = isObsTooOld(results[1].get("FinalisedDate"));
+					if (!isPrevObsTooOld) {
+						prevObservationObjectId = results[1].id;
+						if (results[1].has("PointCuring"))
+							prevPointCuring = results[1].get("PointCuring");
+						if (results[1].has("PointHeight"))
+							prevPointHeight = results[1].get("PointHeight");
+						if (results[1].has("PointCover"))
+							prevPointCover = results[1].get("PointCover");
+						if (results[1].has("PointFuelLoad"))
+							prevPointFuelLoad = results[1].get("PointFuelLoad");
+						if (results[1].has("AreaCuring"))
+							prevAreaCuring = results[1].get("AreaCuring");
+						if (results[1].has("AreaHeight"))
+							prevAreaHeight = results[1].get("AreaHeight");
+						if (results[1].has("AreaCover"))
+							prevAreaCover = results[1].get("AreaCover");
+						if (results[1].has("AreaFuelLoad"))
+							prevAreaFuelLoad = results[1].get("AreaFuelLoad");
+						if (results[1].has("UserFuelLoad"))
+							prevUserFuelLoad = results[1].get("UserFuelLoad");
+						if (results[1].has("Rainfall"))
+							prevRainfall = results[1].get("Rainfall");
+						if (results[1].has("RateOfDrying")) {
+							var prevRateOfDrying = results[1].get("RateOfDrying");
+							prevRodObjectId = prevRateOfDrying.id;
+						}
+						
+						if (results[1].has("AdminCuring")) {
+							prevOpsCuring = results[1].get("AdminCuring");
+						} else if (results[1].has("ValidatorCuring")) {
+							prevOpsCuring = results[1].get("ValidatorCuring");
+						} 
+						/*
+						else {
+							prevOpsCuring = results[1].get("AreaCuring");
+						}
+						*/
 					}
-					*/
 				}
 			}
 			
@@ -2939,8 +3118,13 @@ Parse.Cloud.define("applyValidationByException", function(request, response) {
 			var locObjId = results[i].get("Location").id;
 			
 			if (results[i].get("ObservationStatus") == 1) {
-				prevObsList.push(results[i]);
-				prevLocIds.push(locObjId);
+				
+				// check if FinalisedDate is 30 days away
+				var isPrevObsTooOld = isObsTooOld(results[i].get("FinalisedDate"));
+				if (!isPrevObsTooOld) {
+					prevObsList.push(results[i]);
+					prevLocIds.push(locObjId);
+				}
 			} else {
 				currLocIds.push(locObjId);
 			}
@@ -3316,3 +3500,26 @@ var sort_by = function(field, reverse, primer){
 		return a = key(a), b = key(b), reverse * ((a > b) - (b > a));
 	} 
 }
+
+/*********************************************************************************************************************************************/
+/**
+ * Returns number of days between two Date objects
+ */
+function numDaysBetween(d1, d2) {
+	var diff = Math.abs(d1.getTime() - d2.getTime());
+	return diff / (1000 * 60 * 60 * 24);
+};
+
+/**
+ * Returns a boolean if a previous obs (ObservationStatus = 1) is MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS days older than Today.
+ */
+function isObsTooOld(finalisedDate) {
+	var today = new Date();
+	var numberOfDaysBetween = numDaysBetween(today, finalisedDate);
+	
+	if (numberOfDaysBetween > MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS)
+		return true;
+	else
+		return false;
+}
+/*********************************************************************************************************************************************/
