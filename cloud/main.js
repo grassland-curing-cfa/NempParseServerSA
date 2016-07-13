@@ -61,6 +61,7 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
 });
 
 // Parse.com Job for sending Request for Validation email
+/*
 Parse.Cloud.job("jobRequestForValidation", function(request, status) {
 	status.message("Scheduled Job [jobRequestForValidation] being executed...");
 	
@@ -134,6 +135,7 @@ Parse.Cloud.job("jobRequestForValidation", function(request, status) {
 		status.success("Job executed but Request for Validation email NOT sent due to invalid date and time.");
 	}
 });
+*/
 
 // Send a "Want to become an observer" email via Mailgun
 Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) {
