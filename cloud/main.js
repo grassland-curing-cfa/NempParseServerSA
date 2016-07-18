@@ -1,13 +1,16 @@
 /*
  * Cloud code for "nemp-sa-dev" connected to the "nemp_dev_sa" MongoLab DB deployed on Heroku
  * Git repo: 				https://github.com/grassland-curing-cfa/NempParseServerSA
- * Heroku app: 				nemp-sa-dev
+ * Heroku app: 				https://nemp-sa-dev.herokuapp.com/parse
  * Initial checkin date: 		23/02/2016
  * Following-up check date:	13/07/2016
+                                18/07/2016
  * https://nemp-sa-dev.herokuapp.com/parse/
  */
 
 var _ = require('underscore');
+var schedule = require('node-schedule');			// https://www.npmjs.com/package/node-schedule
+
 var SUPERUSER = process.env.SUPER_USER;
 var SUPERPASSWORD = process.env.SUPER_USER_PASS;
 var NULL_VAL_INT = -1;
@@ -15,17 +18,15 @@ var NULL_VAL_DBL = -1.0;
  
 var APP_ID = process.env.APP_ID;
 var MASTER_KEY = process.env.MASTER_KEY;
-var SERVER_URL = process.env.SERVER_URL;		// https://nemp-sa-dev.herokuapp.com/parse
+var SERVER_URL = process.env.SERVER_URL;			// https://nemp-sa-dev.herokuapp.com/parse
  
 var MG_DOMAIN = process.env.MG_DOMAIN;
 var MG_KEY = process.env.MG_KEY;
-var CFA_NEMP_EMAIL = 'grasslandcuring-nemp@cfa.vic.gov.au';
-var CFA_GL_TEAM_EMAIL = 'grassland-team@cfa.vic.gov.au';
-var CFA_GL_EMAIL = 'grassland@cfa.vic.gov.au';
-var _IS_DAYLIGHT_SAVING = true;		// boolean indicates if it is now in Daylight Saving time
-var JOB_START_TIME = '09:45 PM';	// GMT in Daylight Saving, "10:45 PM" not in Daylight Saving
-var JOB_END_TIME = '10:15 PM';		// GMT in Daylight Saving, "11:15 PM" not in Daylight Saving
-var MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
+var CFA_NEMP_EMAIL = process.env.EMAIL_ADDR_CFA_NEMP;
+var CFA_GL_EMAIL = process.env.EMAIL_ADDR_CFA_GL;
+var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
+var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
+var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
 
 //var SHARED_WITH_STATES = ["VIC", "QLD", "NSW"];
 
@@ -36,8 +37,8 @@ Parse.Cloud.define("hello", function(request, response) {
 });
 
 Parse.Cloud.define("getDateInAEST", function(request, response) {
-  var currentDateInAEST = getTodayString(_IS_DAYLIGHT_SAVING);
-  response.success("Current Date in AEST: '" + currentDateInAEST + "'");
+    var currentDateInAEST = getTodayString(_IS_DAYLIGHT_SAVING);
+    response.success("_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'");
 });
 
 Parse.Cloud.define("testMailgunJS", function(request, response) {
@@ -61,17 +62,18 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
 });
 
 // Parse.com Job for sending Request for Validation email
-/*
-Parse.Cloud.job("jobRequestForValidation", function(request, status) {
-	status.message("Scheduled Job [jobRequestForValidation] being executed...");
+/******
+Period other than daylight saving days: 11.00 pm (GMT) Wed - this is equivalent to Thursday 9.00 am (AEST, GMT+10);
+For Daylight Saving, 10.00 pm (GMT) = 9.00 am (GMT+11)
+******/
+var j = schedule.scheduleJob({hour: 23, minute: 0, dayOfWeek: 3}, function(){
+	console.log('Scheduled Job [jobRequestForValidation] being executed...');
 	
-	if (isToSendRequestForValidationEmail()) {
-	
-		var toPerson = request.params.toPerson;
-		var toEmail = request.params.toEmail;
-		
-		var Mailgun = require('mailgun');
-		Mailgun.initialize(MG_DOMAIN, MG_KEY);
+	if (_IS_FIRE_DANGER_PERIOD) {
+		var toPerson = process.env.VALIDATION_NOTIF_TO_PERSON;
+		var toEmails = process.env.VALIDATION_NOTIF_TO_EMAILS;
+
+		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
 		
 		var html = '<!DOCTYPE html><html>' + 
 			'<head>' + 
@@ -108,40 +110,34 @@ Parse.Cloud.job("jobRequestForValidation", function(request, status) {
 			'<br>' + 
 			'<table><tr><td width="30%"><img src="http://www.cfa.vic.gov.au/img/logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
 			'<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
-			'<p>E: <a href="mailto:grasslandcuring-nemp@cfa.vic.gov.au" target="_top">grasslandcuring-nemp@cfa.vic.gov.au</a></p></td></tr></table>' + 
+			'<p>E: <a href="mailto:' + CFA_NEMP_EMAIL + '" target="_top">' + CFA_NEMP_EMAIL + '</a></p></td></tr></table>' + 
 			'<br>' + 
 			'<p><i>Note: This email has been generated automatically by the CFS Grassland Curing App. Please do not reply to this email.</i></p>' + 
 			'</body>' + 
 			'</html>';
 		
-		Mailgun.sendEmail({
-			  to: toEmail,
-			  //cc: CFA_NEMP_EMAIL,
-			  from: CFA_NEMP_EMAIL,
-			  subject: "South Australia - Grassland Curing Validation Notification",
-			  text: "",
-			  html: html
-			}, {
-			  success: function(httpResponse) {
-			    console.log(httpResponse);
-			    status.success("Request for Validation email sent successfully.");
-			  },
-			  error: function(httpResponse) {
-			    console.error(httpResponse);
-			    status.error("Uh oh, something went wrong with sending Request for Validation email.");
-			  }
+		var data = {
+			to: toEmails,
+			from: CFA_NEMP_EMAIL,
+			subject: "South Australia - Grassland Curing Validation Notification",
+			text: "",
+			html: html
+		};
+
+		mailgun.messages().send(data, function (error, body) {
+			if (error)
+				console.log(error);    
+			else
+				console.log(body);
 		});
-	} else {
-		status.success("Job executed but Request for Validation email NOT sent due to invalid date and time.");
-	}
+	} else
+		console.log("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
 });
-*/
 
 // Send a "Want to become an observer" email via Mailgun
 Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) {
 	var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
 
-	
 	var firstname = request.params.fn;
 	var lastname = request.params.ln;
 	var email = request.params.em;
@@ -166,36 +162,18 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
 	'</body>' + 
 	'</html>';
 	
-	/*
-	Mailgun.sendEmail({
-		  to: CFA_NEMP_EMAIL,
-		  from: CFA_NEMP_EMAIL,
-		  subject: "Express of Interest to become a grassland curing observer",
-		  text: "",
-		  html: html
-		}, {
-		  success: function(httpResponse) {
-		    console.log(httpResponse);
-		    response.success("Email sent. Details: " + httpResponse.text);
-		  },
-		  error: function(httpResponse) {
-		    console.error(httpResponse);
-		    response.error("Uh oh, something went wrong");
-		  }
-		});
-	*/
 	mailgun.messages().send({
       	to: CFA_NEMP_EMAIL,
 		from: CFA_NEMP_EMAIL,
            subject: "Express of Interest to become a grassland curing observer",
-      text: '',
-      html: html1
+      	text: '',
+      	html: html1
     }, function (error, body) {
       if (error)
-        response.error("" + error);    
+  		response.error("" + error);    
       else
-        response.success(body);
-});
+        	response.success(body);
+    });
 });
 
 //Send a "Welcome email to new user upon signed-up" via Mailgun
@@ -234,38 +212,19 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
 	'<br>' + 
 	'<table><tr><td width="30%"><img src="http://www.cfa.vic.gov.au/img/logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
 	'<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
-	'<p>E: <a href="mailto:grasslandcuring-nemp@cfa.vic.gov.au" target="_top">grasslandcuring-nemp@cfa.vic.gov.au</a></p></td></tr></table>' + 
+	'<p>E: <a href="mailto:' + CFA_NEMP_EMAIL + '" target="_top">' + CFA_NEMP_EMAIL + '</a></p></td></tr></table>' + 
 	'<br>' + 
 	'<p><i>Note: This email has been generated automatically by the CFA NEMP-SA Grassland Curing Online system. Please do not reply to this email.</i></p>' + 
 	'</body>' + 
 	'</html>';
 	
-/*
-	Mailgun.sendEmail({
-		  to: email,
-		  bcc: CFA_NEMP_EMAIL,
-		  from: CFA_NEMP_EMAIL,
-		  subject: "Welcome to the South Australia Grassland Curing Trial",
-		  text: "",
-		  html: html
-		}, {
-		  success: function(httpResponse) {
-		    console.log(httpResponse);
-		    response.success("Email sent. Details: " + httpResponse.text);
-		  },
-		  error: function(httpResponse) {
-		    console.error(httpResponse);
-		    response.error("Uh oh, something went wrong");
-		  }
-		});
-	*/
 	mailgun.messages().send({
-      	to: email,
-		bcc: CFA_NEMP_EMAIL,
-		from: CFA_NEMP_EMAIL,
-		subject: "Welcome to the South Australia Grassland Curing Trial",
-		text: "",
-	html: html
+	  to: email,
+	  bcc: CFA_NEMP_EMAIL,
+	  from: CFA_NEMP_EMAIL,
+	  subject: "Welcome to the South Australia Grassland Curing Trial",
+	  text: "",
+	  html: html
     }, function (error, body) {
       if (error)
         response.error("" + error);    
@@ -308,36 +267,17 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) 
 		'Hello all,' + 
 		'<p>The South Australia grassland curing map has been updated for the ' + strToday + '. To view the map, please click <a href="http://nemp-sa.appspot.com/viscaModel?action=grasslandCuringMap">here</a>.</p>' + 
 		'<p>Kind Regards,</p>' + 
-		'<p>The NEMP Grassland Curing Team <a href="grasslandcuring-nemp@cfa.vic.gov.au">grasslandcuring-nemp@cfa.vic.gov.au</a></p>' + 
+		'<p>The NEMP Grassland Curing Team <a href="' + CFA_NEMP_EMAIL + '">' + CFA_NEMP_EMAIL + '</a></p>' + 
 		'<p><i>Note: This email has been generated automatically by the CFA NEMP-SA Grassland Curing Online system. Please do not reply to this email.</i></p>' + 
 		'</body>' + 
 		'</html>';
 		
-		/*
-		Mailgun.sendEmail({
-			  to: CFA_NEMP_EMAIL,
-			  bcc: recipientList,
-			  from: CFA_NEMP_EMAIL,
-			  subject: "South Australia CFS Grassland Curing Map - " + strToday,
-			  text: "",
-			  html: html
-			}, {
-			  success: function(httpResponse) {
-			    console.log(httpResponse);
-			    response.success("Email sent. Details: " + httpResponse.text);
-			  },
-			  error: function(httpResponse) {
-			    console.error(httpResponse);
-			    response.error("Uh oh, something went wrong");
-			  }
-		});
-		*/
-		mailgun.messages().send({
-          		to: CFA_NEMP_EMAIL,
-			bcc: recipientList,
-			from: CFA_NEMP_EMAIL,
-			subject: "South Australia CFS Grassland Curing Map - " + strToday,
-			text: "",
+	mailgun.messages().send({
+        	to: CFA_NEMP_EMAIL,
+		//bcc: recipientList,
+		from: CFA_NEMP_EMAIL,
+		subject: "South Australia CFS Grassland Curing Map - " + strToday,
+		text: "",
 		html: html
         }, function (error, body) {
           if (error)
@@ -350,10 +290,6 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) 
 	}, function(error) {
 	    response.error("GCUR_MMR_USER_ROLE table lookup failed");
 	});
-	
-	/*
-	
-	*/
 });
 
 Parse.Cloud.define("countOfObservations", function(request, response) {
@@ -369,34 +305,6 @@ Parse.Cloud.define("countOfObservations", function(request, response) {
     }
   });
 });
-
-/*
-Parse.Cloud.define("getLocationFromId", function(request, response) {
-  // Log-in required dued to ACL set on GCUR_LOCATION table with Roles and Users
-  Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {  
-    var query = new Parse.Query("GCUR_LOCATION");
-    query.equalTo("LocationId", request.params.locationId);
-    return query.find();
-  }).then(function(results) {
-    response.success(results);	
-  }, function(error) {
-    response.error("Location table lookup failed");
-  });
-});
-
-Parse.Cloud.define("getLocationNameFromId", function(request, response) {
-  // Log-in required dued to ACL set on GCUR_LOCATION table with Roles and Users
-  Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {
-    var query = new Parse.Query("GCUR_LOCATION");
-    query.equalTo("LocationId", request.params.locationId);
-    return query.find();
-  }).then(function(results) {
-    response.success(results[0].get("LocationName"));	
-  }, function(error) {
-    response.error("Location table lookup failed");
-  });
-});
-*/
 
 Parse.Cloud.define("getUsernameFromId", function(request, response) {
 	Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {
@@ -450,112 +358,6 @@ Parse.Cloud.define("deleteUserByUsername", function(request, response) {
 		response.success(false);
 	});
 });
-
-/*
-Parse.Cloud.define("getRolesForUserObjectId", function(request, response) {
-  var userObjectId = null;
-  var roleName = null;
-  var roleArray = [];
-
-  // Log-in required dued to class-level security set on ROLE table
-  Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {
-    var queryUser = new Parse.Query(Parse.User);
-    queryUser.equalTo("objectId", request.params.objectId);
-    return queryUser.first();
-  }).then(function(usr) {
-    if (usr != undefined) {
-        // username has been found
-		userObjectId = usr.id;
-		var queryRole = new Parse.Query(Parse.Role);
-		return queryRole.find();
-    } else {
-		// username not found and a Promise is thrown out
-		return Parse.Promise.error("There was an error in finding the user.");
-    }
-  }).then(function(results) {
-    //response.success(roles.length);
-    // Create a trivial resolved promise as a base case.
-    var promises = [];
-    _.each(results, function(result) {
-        // query for all Users that have been granted the each role
-        var queryUsersInRole = result.getUsers().query();
-        
-        promises.push(queryUsersInRole.find(
-        {
-            success : function(usrs) {        	
-                for(var j = 0; j < usrs.length; j ++) {
-        		    if (userObjectId == usrs[j].id) {
-        		    	roleArray.push(result);
-        			    break;
-        		    }
-        	    }
-            },
-            error : function(error) {
-                return Parse.Promise.error("There was an error in finding users in a Role.");
-            }
-        }));
-    });
-    // Return a new promise that is resolved when all of the deletes are finished.
-    return Parse.Promise.when(promises);
-  }).then(function() {
-    // Every comment was deleted.
-    response.success(roleArray);
-  }, function(error) {
-    response.error(error);
-  });
-});
-
-Parse.Cloud.define("getMaxLocationId", function(request, response) {
-  // Log-in required dued to ACL set on GCUR_LOCATION table with Roles and Users
-  Parse.User.logIn(SUPERUSER, SUPERPASSWORD).then(function(user) {
-    var query = new Parse.Query("GCUR_LOCATION");
-    return query.find();
-  }).then(function(results) {
-    var max = 0;
-    for (var i = 0; i < results.length; ++i) {
-	   var id = parseInt(results[i].get("LocationId"));
-        if (id > max) {
-		max = id;
-	  }
-    }
-
-    response.success(max);	
-  }, function(error) {
-    response.error("Location table lookup failed");
-  });
-});
-
-Parse.Cloud.beforeSave("GCUR_LOCATION", function(request, response) {
-  Parse.Cloud.run("getMaxLocationId", {}, {
-    success: function(result) {
-      // result is the max number of location id
-
-	var query = new Parse.Query("GCUR_LOCATION");
-	query.equalTo("objectId", request.object.id);
-	query.find({
-  		success: function(results) {
-    		// The object was retrieved successfully.
-
-  			// Only when a new location is created, LocationId is amended!!!
-			if (results.length == 0) {
-				request.object.set("LocationId", result + 1);
-			}
-			
-      		response.success();
-  		},
-  		error: function(error) {
-    		// The object was not retrieved successfully.
-    		// error is a Parse.Error with an error code and message.
-  			response.error("Table GCUR_LOCATION lookup execution failed");
-  		}
-	});
-    },
-    error: function(error) {
-      response.error("Cloud function getMaxLocationId execution failed");
-    }
-  });
-});
-*/
 
 /**
  * Populate all ShareBy{STATE} columns available by "True" beforeSave a new Observation is added
@@ -3373,65 +3175,6 @@ Array.union = function(a, b){
      return a.concat(b).uniquelize();
 };
 
-/******
-Function to check if today is Wednesday (GMT); time is between 10.45 pm and 11.15 pm (GMT) for Request for Validation email Job;
-this is equivalent to Thursday 8:45 am and 9:15 am (AEST, GMT+10);
-For Daylight Saving, 09:45 pm and 10:15 pm (GMT) = 8:45 am and 9:15 am (GMT+11)
-******/
-function isTodayWednesday() {
-	var today = new Date();
-	if(today.getDay() == 3)
-		return true;
-	else
-		return false;
-}
-
-function isToSendRequestForValidationEmail() {
-	var startTime = JOB_START_TIME;
-	var endTime = JOB_END_TIME;
-
-	var curr_time = getval();
-	
-	if ((isTodayWednesday()) && (get24Hr(curr_time) > get24Hr(startTime) && get24Hr(curr_time) < get24Hr(endTime))) {
-	    //in between these two times
-		return true;
-	} else {
-		return false;
-	}
-}
-
-function get24Hr(time){
-    var hours = Number(time.match(/^(\d+)/)[1]);
-    var AMPM = time.match(/\s(.*)$/)[1];
-    if(AMPM == "PM" && hours<12) hours = hours+12;
-    if(AMPM == "AM" && hours==12) hours = hours-12;
-    
-    var minutes = Number(time.match(/:(\d+)/)[1]);
-    hours = hours*100+minutes;
-    console.log(time +" - "+hours);
-    return hours;
-}
-
-function getval() {
-    var currentTime = new Date()
-    var hours = currentTime.getHours()
-    var minutes = currentTime.getMinutes()
-
-    if (minutes < 10) minutes = "0" + minutes;
-
-    var suffix = "AM";
-    if (hours >= 12) {
-        suffix = "PM";
-        hours = hours - 12;
-    }
-    if (hours == 0) {
-        hours = 12;
-    }
-    var current_time = hours + ":" + minutes + " " + suffix;
-
-    return current_time;
-}
-
 /**
  * Returns the last day of the a year and a month
  * e.g. getLastDayOfMonth(2009, 9) returns 30;
@@ -3513,13 +3256,13 @@ function numDaysBetween(d1, d2) {
 };
 
 /**
- * Returns a boolean if a previous obs (ObservationStatus = 1) is MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS days older than Today.
+ * Returns a boolean if a previous obs (ObservationStatus = 1) is _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS days older than Today.
  */
 function isObsTooOld(finalisedDate) {
 	var today = new Date();
 	var numberOfDaysBetween = numDaysBetween(today, finalisedDate);
 	
-	if (numberOfDaysBetween > MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS)
+	if (numberOfDaysBetween > _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS)
 		return true;
 	else
 		return false;
