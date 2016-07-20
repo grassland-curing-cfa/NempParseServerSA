@@ -26,6 +26,7 @@ var CFA_NEMP_EMAIL = process.env.EMAIL_ADDR_CFA_NEMP;
 var CFA_GL_EMAIL = process.env.EMAIL_ADDR_CFA_GL;
 var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
 var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
+var GAE_APP_URL = process.env.GAE_APP_URL;
 var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
 
 //var SHARED_WITH_STATES = ["VIC", "QLD", "NSW"];
@@ -86,7 +87,7 @@ var j = schedule.scheduleJob({hour: 23, minute: 0, dayOfWeek: 3}, function(){
 			'<p>Good morning ' + toPerson + ',</p>' + 
 			'<br>' + 
 			'<p>Grassland curing data for South Australia is now ready for checking. To validate the ground observations, please log into the CFS Grassland Curing App ' + 
-			'<a href="http://nemp-sa.appspot.com">http://nemp-sa.appspot.com</a>.</p>' + 
+			'<a href="' + GAE_APP_URL + '">' + GAE_APP_URL + '</a>.</p>' + 
 			'<br>' + 
 			'<p>To use the system:</p>' + 
 			'<br>' + 
@@ -118,6 +119,7 @@ var j = schedule.scheduleJob({hour: 23, minute: 0, dayOfWeek: 3}, function(){
 		
 		var data = {
 			to: toEmails,
+			cc: CFA_NEMP_EMAIL,
 			from: CFA_NEMP_EMAIL,
 			subject: "South Australia - Grassland Curing Validation Notification",
 			text: "",
@@ -198,7 +200,7 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
 	'<p>Hi ' + firstname + ',' + '</p>' + '<br>' + 
 	'<p>Thank you for participating in the South Australia grassland curing trial. This trial is supported in collaboration with the Country Fire Service and is sponsored by the Commonwealth Attorney General&#39;s Department National Emergency Management Projects (NEMP).</p>' + '<br>' + 
 	'<p>Currently in Victoria, grassland curing is monitored operationally using a combination of satellite data and field observations, which are reported weekly by observers using a web-based data entry tool. As a trial, we are deploying the Victorian approach for South Australia (as well as other states and territories). For online training videos, we encourage you to visit <a href="www.cfa.vic.gov.au/grass">www.cfa.vic.gov.au/grass</a>.</p>' + '<br>' + 
-	'<p>The South Australia web-based data entry tool can be accessed via: <a href="http://nemp-sa.appspot.com">http://nemp-sa.appspot.com</a> (take note, the tool works best on Firefox, Chrome, Internet Explorer 9 or 10)</p>' + '<br>' + 
+	'<p>The South Australia web-based data entry tool can be accessed via: <a href="' + GAE_APP_URL + '">' + GAE_APP_URL + '</a> (take note, the tool works best on Firefox, Chrome, Internet Explorer 9 or 10)</p>' + '<br>' + 
 	'<p>Your login details are as follows: </p>' + '<br>' + 
 	'<ul>' + 
 	'<li>Username: ' + username + '</li>' + 
@@ -265,7 +267,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) 
 		var html = '<!DOCTYPE html><html>' +
 		'<body>' + 
 		'Hello all,' + 
-		'<p>The South Australia grassland curing map has been updated for the ' + strToday + '. To view the map, please click <a href="http://nemp-sa.appspot.com/viscaModel?action=grasslandCuringMap">here</a>.</p>' + 
+		'<p>The South Australia grassland curing map has been updated for the ' + strToday + '. To view the map, please click <a href="' + GAE_APP_URL + '/viscaModel?action=grasslandCuringMap">here</a>.</p>' + 
 		'<p>Kind Regards,</p>' + 
 		'<p>The NEMP Grassland Curing Team <a href="' + CFA_NEMP_EMAIL + '">' + CFA_NEMP_EMAIL + '</a></p>' + 
 		'<p><i>Note: This email has been generated automatically by the CFA NEMP-SA Grassland Curing Online system. Please do not reply to this email.</i></p>' + 
