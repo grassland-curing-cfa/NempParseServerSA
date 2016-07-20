@@ -167,7 +167,7 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
 		from: CFA_NEMP_EMAIL,
            subject: "Express of Interest to become a grassland curing observer",
       	text: '',
-      	html: html1
+      	html: html
     }, function (error, body) {
       if (error)
   		response.error("" + error);    
