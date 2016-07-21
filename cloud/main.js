@@ -67,7 +67,7 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
 Period other than daylight saving days: 11.00 pm (GMT) Wed - this is equivalent to Thursday 9.00 am (AEST, GMT+10);
 For Daylight Saving, 10.00 pm (GMT) = 9.00 am (GMT+11)
 ******/
-var j = schedule.scheduleJob({hour: 2, minute: 37, dayOfWeek: 4}, function(){
+var j = schedule.scheduleJob({hour: 2, minute: 39, dayOfWeek: 4}, function(){
 	console.log('Scheduled Job [jobRequestForValidation] being executed...');
 	
 	if (_IS_FIRE_DANGER_PERIOD) {
