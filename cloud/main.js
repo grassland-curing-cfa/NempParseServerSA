@@ -81,7 +81,7 @@ var validationRequestEmailHtml = '<!DOCTYPE html><html>' +
 			'</style>' + 
 			'</head>' + 
 			'<body>' + 
-			'<p>Good morning ' + toPerson + ',</p>' + 
+			'<p>Good morning ' + process.env.VALIDATION_NOTIF_TO_PERSON + ',</p>' + 
 			'<br>' + 
 			'<p>Grassland curing data for South Australia is now ready for checking. To validate the ground observations, please log into the CFS Grassland Curing App ' + 
 			'<a href="' + GAE_APP_URL + '">' + GAE_APP_URL + '</a>.</p>' + 
@@ -146,7 +146,6 @@ Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) 
 	console.log('Function [sendEmailRequestForValidation] being executed...');
 	
 	if (_IS_FIRE_DANGER_PERIOD) {
-		var toPerson = process.env.VALIDATION_NOTIF_TO_PERSON;
 		var toEmails = process.env.VALIDATION_NOTIF_TO_EMAILS;
 
 		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
