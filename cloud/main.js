@@ -161,12 +161,12 @@ Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) 
 
 		mailgun.messages().send(data, function (error, body) {
 			if (error)
-				console.log(error);    
+				response.error("" + error);
 			else
-				console.log(body);
+				response.success(body);
 		});
 	} else
-		console.log("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
+		response.success("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
 
 });
 
@@ -206,7 +206,7 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
       	html: html
     }, function (error, body) {
       if (error)
-  		response.error("" + error);    
+  		response.error("" + error);
       else
         	response.success(body);
     });
