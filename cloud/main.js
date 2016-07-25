@@ -27,15 +27,9 @@ var CFA_GL_EMAIL = process.env.EMAIL_ADDR_CFA_GL;
 var _IS_DAYLIGHT_SAVING = (process.env.IS_DAYLIGHT_SAVING == "1" ? true : false);     		// boolean indicates if it is now in Daylight Saving time
 var _IS_FIRE_DANGER_PERIOD = (process.env.IS_FIRE_DANGER_PERIOD == "1" ? true : false);     	// boolean indicates if it is now in the Fire Danger Period
 var GAE_APP_URL = process.env.GAE_APP_URL;
-var VALIDATION_NOTIF_SCHEDULE_JSON = process.env.VALIDATION_NOTIF_SCHEDULE_JSON
 var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = 30;		// An obs with the FinalisedDate older than this number should not be returned and treated as Last Season data
 
 //var SHARED_WITH_STATES = ["VIC", "QLD", "NSW"];
-
-var validation_notif_schedule_string = JSON.parse(VALIDATION_NOTIF_SCHEDULE_JSON);
-var validation_notif_hr = (_IS_DAYLIGHT_SAVING) ? validation_notif_schedule_string.hour - 1 : validation_notif_schedule_string.hour;
-var validation_notif_min = validation_notif_schedule_string.minute;
-var validation_notif_dow = validation_notif_schedule_string.dayOfWeek;
 
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
@@ -114,34 +108,6 @@ var validationRequestEmailHtml = '<!DOCTYPE html><html>' +
 			'</body>' + 
 			'</html>';
 
-var j = schedule.scheduleJob({hour: validation_notif_hr, minute: validation_notif_min, dayOfWeek: validation_notif_dow}, function(){
-	console.log('Scheduled Job [jobRequestForValidation] being executed...');
-	
-	if (_IS_FIRE_DANGER_PERIOD) {
-		var toPerson = process.env.VALIDATION_NOTIF_TO_PERSON;
-		var toEmails = process.env.VALIDATION_NOTIF_TO_EMAILS;
-
-		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
-		
-		var data = {
-			to: toEmails,
-			cc: CFA_NEMP_EMAIL,
-			from: CFA_NEMP_EMAIL,
-			subject: "South Australia - Grassland Curing Validation Notification",
-			text: "",
-			html: validationRequestEmailHtml
-		};
-
-		mailgun.messages().send(data, function (error, body) {
-			if (error)
-				console.log(error);    
-			else
-				console.log(body);
-		});
-	} else
-		console.log("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
-});
-
 Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) {
 	console.log('Function [sendEmailRequestForValidation] being executed...');
 	
@@ -160,10 +126,14 @@ Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) 
 		};
 
 		mailgun.messages().send(data, function (error, body) {
-			if (error)
+			if (error) {
+				console.log(error);
 				response.error("" + error);
-			else
+			}
+			else {
+				console.log(body);
 				response.success(body);
+			}
 		});
 	} else
 		response.success("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
