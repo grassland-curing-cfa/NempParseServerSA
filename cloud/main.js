@@ -81,7 +81,7 @@ var validationRequestEmailHtml = '<!DOCTYPE html><html>' +
 			'<body>' + 
 			'<p>Good morning ' + process.env.VALIDATION_NOTIF_TO_PERSON + ',</p>' + 
 			'<br>' + 
-			'<p>Grassland curing data for South Australia is now ready for checking. To validate the ground observations, please log into the CFS Grassland Curing App ' + 
+			'<p>Grassland curing data for South Australia is now ready for checking. To validate the ground observations, please log into ' + process.env.APP_NAME + ' ' + 
 			'<a href="' + GAE_APP_URL + '">' + GAE_APP_URL + '</a>.</p>' + 
 			'<br>' + 
 			'<p>To use the system:</p>' + 
@@ -98,7 +98,7 @@ var validationRequestEmailHtml = '<!DOCTYPE html><html>' +
 			'<br>' + 
 			'<p>You can also access the "Help" button at the bottom of the main page.</p>' + 
 			'<br>' + 
-			'<p>If you have any questions, please contact us (Susan - 03 8822 8059; Danni - 03 8822 8073; Alex - 03 8822 8060; Rachel - 03 9262 8607).</p>' + 
+			'<p>If you have any questions, please contact us (Alex - 03 8822 8060; Rachel - 03 9262 8607).</p>' + 
 			'<br>' + 
 			'<p>Kind Regards,</p>' + 
 			'<br>' + 
@@ -108,7 +108,7 @@ var validationRequestEmailHtml = '<!DOCTYPE html><html>' +
 			'<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
 			'<p>E: <a href="mailto:' + CFA_NEMP_EMAIL + '" target="_top">' + CFA_NEMP_EMAIL + '</a></p></td></tr></table>' + 
 			'<br>' + 
-			'<p><i>Note: This email has been generated automatically by the CFS Grassland Curing App. Please do not reply to this email.</i></p>' + 
+			'<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
 			'</body>' + 
 			'</html>';
 
@@ -167,7 +167,7 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
 	'</ul>' +
 	'<p>Kind Regards,</p>' + 
 	'<p>The NEMP Grassland Curing Team <a href="' + CFA_NEMP_EMAIL + '">' + CFA_NEMP_EMAIL + '</a></p>' + 
-	'<p><i>Note: This email has been generated automatically by the CFA NEMP-SA Grassland Curing Online system. Please do not reply to this email.</i></p>' + 
+	'<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
 	'</body>' + 
 	'</html>';
 	
@@ -223,7 +223,7 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
 	'<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
 	'<p>E: <a href="mailto:' + CFA_NEMP_EMAIL + '" target="_top">' + CFA_NEMP_EMAIL + '</a></p></td></tr></table>' + 
 	'<br>' + 
-	'<p><i>Note: This email has been generated automatically by the CFA NEMP-SA Grassland Curing Online system. Please do not reply to this email.</i></p>' + 
+	'<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
 	'</body>' + 
 	'</html>';
 	
@@ -277,7 +277,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) 
 		'<p>The South Australia grassland curing map has been updated for the ' + strToday + '. To view the map, please click <a href="' + GAE_APP_URL + '/viscaModel?action=grasslandCuringMap">here</a>.</p>' + 
 		'<p>Kind Regards,</p>' + 
 		'<p>The NEMP Grassland Curing Team <a href="' + CFA_NEMP_EMAIL + '">' + CFA_NEMP_EMAIL + '</a></p>' + 
-		'<p><i>Note: This email has been generated automatically by the CFA NEMP-SA Grassland Curing Online system. Please do not reply to this email.</i></p>' + 
+		'<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
 		'</body>' + 
 		'</html>';
 		
