@@ -245,7 +245,7 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
 //Send a "finalised map" email to all active observers, validators and administrators via Mailgun
 Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) {
 	// get all active observers, validators and administrators
-	var recipientList = CFA_GL_EMAIL + ";";
+	var recipientList = CFA_GL_EMAIL + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP;
 	Parse.Cloud.useMasterKey();
 	
 	var queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
