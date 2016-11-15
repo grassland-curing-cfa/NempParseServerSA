@@ -425,7 +425,8 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 	sharedWithJurisArr = [];
 	
 	if(request.object.isNew()) {
-		
+		// Adding a new GCUR_OBSERVATION object
+		console.log("Adding a new Observation.");
 		var sharedJurisSettingsQ = new Parse.Query("GCUR_SHARED_JURIS_SETTINGS");
 		
 		sharedJurisSettingsQ.find().then(function(sjsObjs) {
@@ -447,8 +448,11 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 			
 			response.success();
 		});
-	} else
+	} else {
+		// Updating an existing GCUR_OBSERVATION object
+		console.log("*** Updating an existing Observation. GCUR_OBSERVATION objectId = " + objId);
 		response.success();
+	}
 });
 
 /*
