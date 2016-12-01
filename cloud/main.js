@@ -401,7 +401,7 @@ Parse.Cloud.beforeSave("GCUR_OBSERVATION", function(request, response) {
 				
 	console.log("* AreaCuring[ " + newAreaCuring + "], ValidatorCuring[" + newValidatorCuring + "], AdminCuring[" + newAdminCuring + "]");
 	
-	sharedWithJurisArr = [];
+	var sharedWithJurisArr = [];
 	
 	if(request.object.isNew()) {
 		// Adding a new GCUR_OBSERVATION object
@@ -2472,7 +2472,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, respo
 Parse.Cloud.define("finaliseDataOnParse", function(request, response) {
 	var result = false;
 	
-	console.log("Triggering the Cloud Function 'finaliseObservationOnParse'");
+	console.log("Triggering the Cloud Function 'finaliseDataOnParse'");
 	
 	// Change all GCUR_OBSERVATION records with ObservationStatus being 1 to 2
 	queryPrev = new Parse.Query("GCUR_OBSERVATION");
