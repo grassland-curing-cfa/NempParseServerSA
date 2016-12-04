@@ -9,6 +9,7 @@
 										updated "getPrevSimpleObsSharedInfoForState" & "getSharedPrevCuringForStateForInputToVISCA"
 							21/11/2016: NEMP-1-150: added request.user to beforeSave and afterSave triggers for GCUR_OBSERVATION & GCUR_LOCATION classes
 							01/12/2016: NEMP-1-154: Running the "applyValidationByException" Cloud function creates incorrect String on the "SharedBy" column of the GCUR_OBSERVATION table
+										NEMP-1-151: Remove unnecessary Parse.User.logIn(SUPERUSER, SUPERPASSWORD) and Parse.Cloud.useMasterKey() in the Cloud function
  */
 
 var _ = require('underscore');
@@ -313,6 +314,38 @@ Parse.Cloud.define("exportEmailsForActiveUsers", function(request, response) {
 			var status = results[i].get("status");
 			if (status && ((role.get("name") == "Observers") || (role.get("name") == "Validators"))) {
 			//if (status) {	// only select active users
+				var user = results[i].get("user");
+				var email = user.get("email");
+				
+				if (recipientList.indexOf(email) == -1) {
+					console.log("Email [" + email + "] being added in recipientList.");
+					recipientList = recipientList + email + ";";
+				} else
+					console.log("Email [" + email + "] already added in recipientList.");
+			}
+		}
+		response.success(recipientList);	
+	}, function(error) {
+	    response.error("GCUR_MMR_USER_ROLE table lookup failed");
+	});
+});
+
+// export a list of email addresses for recipients that receive the finalsed map email
+Parse.Cloud.define("exportEmailsForManualFinalMapEmail", function(request, response) {
+	// get all active observers, validators and administrators
+	var recipientList = CFA_GL_EMAIL + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP;
+	
+	var queryMMR = new Parse.Query("GCUR_MMR_USER_ROLE");
+	queryMMR.include("user");
+	queryMMR.include("role");
+	queryMMR.limit(1000);
+	queryMMR.find({ useMasterKey: true }).then(function(results) {
+		// results is array of GCUR_MMR_USER_ROLE records
+		for (var i = 0; i < results.length; i++) {
+			var role = results[i].get("role");
+			var status = results[i].get("status");
+			//if (status && ((role.get("name") == "Observers") || (role.get("name") == "Validators"))) {
+			if (status) {	// only select active users
 				var user = results[i].get("user");
 				var email = user.get("email");
 				
