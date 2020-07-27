@@ -11,7 +11,8 @@
 							01/12/2016: NEMP-1-154: Running the "applyValidationByException" Cloud function creates incorrect String on the "SharedBy" column of the GCUR_OBSERVATION table
 										NEMP-1-151: Remove unnecessary Parse.User.logIn(SUPERUSER, SUPERPASSWORD) and Parse.Cloud.useMasterKey() in the Cloud function
 							30/08/2018: Created two cloud functions: "automateRunModel" & "automateFinaliseData" on the Parse Server for automating RunModel and FinaliseData jobs
- */
+							28/07/2020: Started to upgrade code to Parse-server 3.0+
+*/
 
 var _ = require('underscore');
 var schedule = require('node-schedule');			// https://www.npmjs.com/package/node-schedule
@@ -43,7 +44,7 @@ var SUPERUSER_OBJECTID = "ooXLn2wtYR";
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
 Parse.Cloud.define("hello", function(request, response) {
-  response.success("Hello world from " + process.env.APP_NAME);
+  return "Hello world from " + process.env.APP_NAME;
 });
 
 Parse.Cloud.define("getDateInAEST", function(request, response) {
