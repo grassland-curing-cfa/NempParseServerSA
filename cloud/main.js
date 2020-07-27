@@ -52,7 +52,7 @@ Parse.Cloud.define("getDateInAEST", function(request, response) {
     response.success("_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'");
 });
 
-Parse.Cloud.define("testMailgunJS", function(request, response) {
+Parse.Cloud.define("testMailgunJS", (request) => {
   var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
   
   var data = {
@@ -66,9 +66,9 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
   
   mailgun.messages().send(data, function (error, body) {
     if (error)
-      response.error("" + error);    
+		throw new Error("" + error);    
     else
-      response.success(body);
+		return body;
   });
 });
 
