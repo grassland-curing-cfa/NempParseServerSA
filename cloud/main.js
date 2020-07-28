@@ -1674,62 +1674,42 @@ Parse.Cloud.define("getObsForInputToVISCA", function(request, response) {
 	});
 });
 
-Parse.Cloud.define("getCountOfLocsForDistricts", function(request, response) {
-	console.log("Triggering the Cloud Function 'getCountOfLocsForDistricts'");
+Parse.Cloud.define("getCountOfLocsForDistricts", async (request) => {	
+	const districtList = [];	// the output array for response
 	
-	var districtList = [];	// the output array for response
-	
-	var queryDistrict = new Parse.Query("GCUR_DISTRICT");
+	// Find districts
+	const queryDistrict = new Parse.Query("GCUR_DISTRICT");
 	queryDistrict.ascending("DIST_NAME");
 	queryDistrict.limit(1000);
 	queryDistrict.select("DISTRICT", "DIST_NAME");
-	queryDistrict.find().then(function(results) {
-		// Create a trivial resolved promise as a base case.
-	    var promises = [];
-	    // each result is a GCUR_DISTRICT row
-	    _.each(results, function(result) {
-	    	var res;
-	    	
-			var district = result;
-			var districtObjId = district.id;
-			var districtNo = district.get("DISTRICT");
-			var districtName = district.get("DIST_NAME");
-				
-			var SUSPENDED_STR = "suspended";
-				
-			var queryLocation = new Parse.Query("GCUR_LOCATION");
-			queryLocation.equalTo("DistrictNo", districtNo);
-			queryLocation.notEqualTo("LocationStatus", "suspended");
-			queryLocation.limit(1000);
-			queryLocation.ascending("LocationName");
-					
-			promises.push(queryLocation.find({
-				success : function(results) {
-					// results are JavaScript Array of GCUR_LOCATION objects
-							
-					var countOfLocations = results.length;
-
-					res = {
-						"districtObjId" : districtObjId,
-						"districtNo" : 	districtNo,
-						"districtName" : districtName,
-						"countOfLocations" : countOfLocations
-					};
-							
-					districtList.push(res);
-				},
-				error : function(error) {
-					return Parse.Promise.error("There was an error in finding GCUR_LOCATION.");
-				}
-			}));
-	    });
-	    // Return a new promise that is resolved when all of the promises are resolved
-	    return Parse.Promise.when(promises);
-	}).then(function() {
-	    response.success(districtList);
-	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
-	});
+	const districtResults = await queryDistrict.find();
+	
+	// For each district, find count of locations that fall into the district.
+	for (let i = 0; i < districtResults.length; i ++) {
+		const district = districtResults[i];
+		const districtObjId = district.id;
+		const districtNo = district.get("DISTRICT");
+		const districtName = district.get("DIST_NAME");
+		
+		const queryLocation = new Parse.Query("GCUR_LOCATION");
+		queryLocation.equalTo("DistrictNo", districtNo);
+		queryLocation.notEqualTo("LocationStatus", "suspended");
+		queryLocation.limit(1000);
+		queryLocation.ascending("LocationName");
+		const locationResults = await queryLocation.find();
+		
+		const countOfLocations = locationResults.length;
+		
+		const res = {
+			"districtObjId" : districtObjId,
+			"districtNo" : 	districtNo,
+			"districtName" : districtName,
+			"countOfLocations" : countOfLocations
+		};
+		districtList.push(res);
+	}
+	
+	return districtList;
 });
 
 // Referenced by the observationDetails.jsp page object
