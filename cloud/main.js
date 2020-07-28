@@ -67,10 +67,8 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
   mailgun.messages().send(data, function (error, body) {
     if (error)
 		throw new Error("" + error);    
-    else {
-		console.log("send called");
-		return body;
-	}
+    else
+		return "body:" + body;
   });
 });
 
