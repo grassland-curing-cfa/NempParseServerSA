@@ -70,6 +70,8 @@ Parse.Cloud.define("testMailgunJS", function(request, response) {
     else
 		return "body:" + body;
   });
+
+  return "alex";
 });
 
 // Parse.com Job for sending Request for Validation email
