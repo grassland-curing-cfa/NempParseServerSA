@@ -2105,6 +2105,9 @@ Parse.Cloud.define("updateLinkedLocsForObserverByIds", function(request, respons
 	});
 });
 
+/**
+ * Triggered by action = acceptAllObserverValues
+ */
 Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	var ALL_DISTRICT = "9999";		// If the districtNo == 9999, return all active locatons.
 	
@@ -2166,17 +2169,17 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 			sessionToken: sessionToken,
 		    success: function(list) {
 		        // All the objects were saved.
-		    	response.success(affectedObsCount);  //saveAll is now finished and we can properly exit with confidence :-)
+		    	return affectedObsCount;  //saveAll is now finished and we can properly exit with confidence :-)
 		      },
 		      error: function(error) {
 		        // An error occurred while saving one of the objects.
-		    	  response.error("Error: " + error.code + " " + error.message);
+		    	  throw new Error("Error: " + error.code + " " + error.message);
 		      },
 		    });
 		
 		//response.success(results.length);
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
