@@ -2129,6 +2129,7 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	// Include the Location data with each GCUR_OBSERVATION
 	queryObservation.include("Location");
 	queryObservation.find().then(function(results) {
+		console.log("*** FLAG 1");
 		var affectedObsCount = 0;
 		
 		for (var i = 0; i < results.length; i ++) {
@@ -2164,11 +2165,12 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 				affectedObsCount = affectedObsCount + 1;
 			}
 		}
-		
+		console.log("*** FLAG 2");
 		Parse.Object.saveAll(results, {
 			sessionToken: sessionToken,
 		    success: function(list) {
-		        // All the objects were saved.
+				// All the objects were saved.
+				console.log("*** FLAG 3");
 		    	return affectedObsCount;  //saveAll is now finished and we can properly exit with confidence :-)
 		      },
 		      error: function(error) {
@@ -2176,7 +2178,7 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 		    	  throw new Error("Error: " + error.code + " " + error.message);
 		      },
 		    });
-		
+		console.log("*** FLAG 4");
 		//response.success(results.length);
 	}, function(error) {
 		throw new Error("Error: " + error.code + " " + error.message);
