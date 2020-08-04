@@ -2184,6 +2184,7 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 		return Parse.Object.saveAll(results, { useMasterKey: true });
 	}).then(function(objectList) {
 		console.log("*** FLAG 4");
+		console.log(objectList.length);
 		return objectList.length;
 	}, function(error) {
 		throw new Error("Error: " + error.code + " " + error.message);
