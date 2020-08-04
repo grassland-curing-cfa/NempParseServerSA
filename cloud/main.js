@@ -2167,25 +2167,11 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 		}
 		console.log("*** FLAG 2");
 
-		/*
-		Parse.Object.saveAll(results, {
-			sessionToken: sessionToken,
-		    success: function(list) {
-				// All the objects were saved.
-				console.log("*** FLAG 3");
-		    	return affectedObsCount;  //saveAll is now finished and we can properly exit with confidence :-)
-		      },
-		      error: function(error) {
-		        // An error occurred while saving one of the objects.
-		    	  throw new Error("Error: " + error.code + " " + error.message);
-		      },
-		});
-		*/
 		return Parse.Object.saveAll(results, { useMasterKey: true });
 	}).then(function(objectList) {
 		console.log("*** FLAG 4");
 		console.log(objectList.length);
-		return objectList.length;
+		return "*** test: " + objectList.length;
 	}, function(error) {
 		throw new Error("Error: " + error.code + " " + error.message);
 	});
