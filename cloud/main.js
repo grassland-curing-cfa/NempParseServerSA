@@ -2166,6 +2166,8 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 			}
 		}
 		console.log("*** FLAG 2");
+
+		/*
 		Parse.Object.saveAll(results, {
 			sessionToken: sessionToken,
 		    success: function(list) {
@@ -2177,9 +2179,12 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 		        // An error occurred while saving one of the objects.
 		    	  throw new Error("Error: " + error.code + " " + error.message);
 		      },
-		    });
+		});
+		*/
+		return Parse.Object.saveAll(results, { useMasterKey: true });
+	}).then(function(objectList) {
 		console.log("*** FLAG 4");
-		//response.success(results.length);
+		return objectList.length;
 	}, function(error) {
 		throw new Error("Error: " + error.code + " " + error.message);
 	});
