@@ -2128,19 +2128,12 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	queryObservation.limit(1000);
 	// Include the Location data with each GCUR_OBSERVATION
 	queryObservation.include("Location");
-	return queryObservation.find().then(function(results) {
-		console.log("*** FLAG 1");
-		var affectedObsCount = 0;
-		
+	return queryObservation.find().then(function(results) {		
 		for (var i = 0; i < results.length; i ++) {
 			var obs = results[i];
 			
 			var location = obs.get("Location");
 			var locationObjId = location.id;
-			//var locationName = location.get("LocationName");
-			//var locationStatus = location.get("LocationStatus");
-			//var locationLat = location.get("Lat");
-			//var locationLng = location.get("Lng");
 			var locationDistrictNo = location.get("DistrictNo");
 			
 			var isLocInDistrict = false;
@@ -2161,17 +2154,12 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 				obs.set("ValidationDate", currDateTime);
 				obs.set("Validator", validator);
 				//obs.save();
-				
-				affectedObsCount = affectedObsCount + 1;
 			}
 		}
-		console.log("*** FLAG 2");
 
 		return Parse.Object.saveAll(results, { useMasterKey: true });
 	}).then(function(objectList) {
-		console.log("*** FLAG 4");
-		console.log(objectList.length);
-		return "*** test: " + objectList.length;
+		return objectList.length;
 	}, function(error) {
 		throw new Error("Error: " + error.code + " " + error.message);
 	});
