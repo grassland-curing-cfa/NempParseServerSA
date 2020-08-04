@@ -2175,8 +2175,6 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	}, function(error) {
 		throw new Error("Error: " + error.code + " " + error.message);
 	});
-
-	return objectList.length;
 });
 
 Parse.Cloud.define("getAdjustedCuringForAllDistricts", function(request, response) {
