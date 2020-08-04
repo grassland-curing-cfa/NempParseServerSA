@@ -2128,7 +2128,7 @@ Parse.Cloud.define("acceptAllObserverCurings", function(request, response) {
 	queryObservation.limit(1000);
 	// Include the Location data with each GCUR_OBSERVATION
 	queryObservation.include("Location");
-	queryObservation.find().then(function(results) {
+	return queryObservation.find().then(function(results) {
 		console.log("*** FLAG 1");
 		var affectedObsCount = 0;
 		
