@@ -2541,9 +2541,9 @@ Parse.Cloud.define("finaliseDataOnParse", (request) => {
 		console.log("All current GCUR_ADJUST_LOCATION records with ObservationStatus being 0 have been succssfully updated to previous records.");
 		
 		result = true;
-		response.success(result);  //saveAll is now finished and we can properly exit with confidence :-)
+		return result;  //saveAll is now finished and we can properly exit with confidence :-)
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
