@@ -11,7 +11,7 @@
 							01/12/2016: NEMP-1-154: Running the "applyValidationByException" Cloud function creates incorrect String on the "SharedBy" column of the GCUR_OBSERVATION table
 										NEMP-1-151: Remove unnecessary Parse.User.logIn(SUPERUSER, SUPERPASSWORD) and Parse.Cloud.useMasterKey() in the Cloud function
 							30/08/2018: Created two cloud functions: "automateRunModel" & "automateFinaliseData" on the Parse Server for automating RunModel and FinaliseData jobs
-							28/07/2020: Started to upgrade code to Parse-server 3.0+
+							28/07/2020: Started to upgrade code to Parse-server 3.0+ 
 */
 
 var _ = require('underscore');
