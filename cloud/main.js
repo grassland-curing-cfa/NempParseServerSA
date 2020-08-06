@@ -2447,7 +2447,7 @@ Parse.Cloud.define("finaliseDataOnParse", (request) => {
 	queryPrev = new Parse.Query("GCUR_OBSERVATION");
 	queryPrev.equalTo("ObservationStatus", 1);
 	queryPrev.limit(1000);
-	queryPrev.find().then(function(prev_observations) {
+	return queryPrev.find().then(function(prev_observations) {
 		//return Parse.Object.destroyAll(prev_observations);
 		for (var i = 0; i < prev_observations.length; i ++) {
 			var obs = prev_observations[i];
