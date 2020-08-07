@@ -2926,6 +2926,7 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 		
 		return createdNewObsIdList;
 	}, function(error) {
+		console.log("*** ERROR THROWN");
 		throw new Error("Error: " + error);
 	});
 });
