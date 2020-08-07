@@ -2757,7 +2757,7 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 	
 	// Check if the system setting "isValidationByException " is currently set "True";
 	var querySystemSettings = new Parse.Query("GCUR_SYSTEM_SETTINGS");
-	querySystemSettings.first().then(function(systemSettingRecord) {
+	return querySystemSettings.first().then(function(systemSettingRecord) {
 		try {
 			console.log("FLAG 0");
 			isValidationByException = systemSettingRecord.get("isValidationByException");
@@ -2927,7 +2927,7 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 		return createdNewObsIdList;
 	}, function(error) {
 		console.log("*** ERROR THROWN");
-		throw new Error("Error: " + error);
+		throw new Parse.Error(1001, 'My error') 
 	});
 });
 
