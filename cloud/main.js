@@ -2762,23 +2762,23 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 			console.log("FLAG 0");
 			isValidationByException = systemSettingRecord.get("isValidationByException");
 			console.log("FLAG 1");
-			return Parse.Promise.as("isValidationByException is found!");
+			return Promise.resolve("isValidationByException is found!");
 		} catch (err) {
 			console.log("FLAG 2");
 			console.log("There was an error in getting 'isValidationByException'.");
-			return Parse.Promise.error("There was an error in getting 'isValidationByException'.");
+			return Promise.reject("There was an error in getting 'isValidationByException'.");
 		}
 	}, function(error) {
 		console.log("There was an error in finding GCUR_SYSTEM_SETTINGS.");
-		return Parse.Promise.error("There was an error in finding GCUR_SYSTEM_SETTINGS.");
+		return Promise.reject("There was an error in finding GCUR_SYSTEM_SETTINGS.");
 	}).then(function() {
 		console.log("isValidationByException = " + isValidationByException);
 		
 		if (isValidationByException) {
-			return Parse.Promise.as("To apply Validation By Exception rule!");
+			return Promise.resolve("To apply Validation By Exception rule!");
 		} else {
 			console.log("Not to applying Validation By Exception rule. Function stopped here.");
-			return Parse.Promise.error("Validation By Exception is currently set False.");
+			return Promise.reject("Validation By Exception is currently set False.");
 		}
 	}).then(function() {
 		console.log("Applying Validation By Exception rule... ...");
@@ -2906,7 +2906,7 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 			}
 		}
 		
-		return Parse.Object.saveAll(currObsListToBeSaved);
+		return Parse.Object.saveAll(currObsListToBeSaved, { useMasterKey: true });
 		
 		//response.success(true);
 	}).then(function(objectList) {
@@ -2924,9 +2924,9 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 		console.log("Validation By Exception rule applied; New GCUR_OBSERVATION object count = " + countOfObsApplied);
 		console.log("The execution time for 'applyValidationByException' = " + (new Date().getTime() - startTime)/1000);
 		
-		response.success(createdNewObsIdList);
+		return createdNewObsIdList;
 	}, function(error) {
-		response.error("Error: " + error);
+		throw new Error("Error: " + error);
 	});
 });
 
