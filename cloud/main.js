@@ -2747,8 +2747,9 @@ Parse.Cloud.define("getFinaliseModelDetail", function(request, response) {
 
 /**
  * Apply Validation By Exception if previous best curing reached 100%
+ * Triggered by the applyValidationByException function in \NEMP_GC\Parse_synch\NSW_New_Mig\synch.py
  */
-Parse.Cloud.define("applyValidationByException", function(request, response) {
+Parse.Cloud.define("applyValidationByException", (request) => {
 	var startTime = new Date().getTime();
 	
 	var isValidationByException = false;
@@ -2758,9 +2759,12 @@ Parse.Cloud.define("applyValidationByException", function(request, response) {
 	var querySystemSettings = new Parse.Query("GCUR_SYSTEM_SETTINGS");
 	querySystemSettings.first().then(function(systemSettingRecord) {
 		try {
+			console.log("FLAG 0");
 			isValidationByException = systemSettingRecord.get("isValidationByException");
+			console.log("FLAG 1");
 			return Parse.Promise.as("isValidationByException is found!");
 		} catch (err) {
+			console.log("FLAG 2");
 			console.log("There was an error in getting 'isValidationByException'.");
 			return Parse.Promise.error("There was an error in getting 'isValidationByException'.");
 		}
