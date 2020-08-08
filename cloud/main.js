@@ -2759,12 +2759,9 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 	var querySystemSettings = new Parse.Query("GCUR_SYSTEM_SETTINGS");
 	return querySystemSettings.first().then(function(systemSettingRecord) {
 		try {
-			console.log("FLAG 0");
 			isValidationByException = systemSettingRecord.get("isValidationByException");
-			console.log("FLAG 1");
 			return Promise.resolve("isValidationByException is found!");
 		} catch (err) {
-			console.log("FLAG 2");
 			console.log("There was an error in getting 'isValidationByException'.");
 			return Promise.reject("There was an error in getting 'isValidationByException'.");
 		}
@@ -2821,17 +2818,9 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 		prevLocsOnlyIds = inAButNotInB(prevLocIds, currLocIds);
 		console.log(prevLocsOnlyIds.length + " locations that do not exist in current week but in previous week.");
 		
-		//console.log("prevObs count: " + prevObs.length);
-		//console.log("prevLocIds count: " + prevLocIds.length);
-		//console.log("currLocIds count: " + currLocIds.length);
-		
 		var currObsListToBeSaved = [];	// array for the GCUR_OBSERVATION objects to be saved to the GCUR_OBSERVATION table by the rule!
 
-		for (var j = 0; j < prevLocsOnlyIds.length; j++) {
-			var currAreaCuring;
-			var currValidatorCuring;
-			var currAdminCuring;
-			
+		for (var j = 0; j < prevLocsOnlyIds.length; j++) {			
 			for (var k = 0; k < prevObsList.length; k++) {
 				var prevObs = prevObsList[k];
 				
@@ -2907,8 +2896,6 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 		}
 		
 		return Parse.Object.saveAll(currObsListToBeSaved, { useMasterKey: true });
-		
-		//response.success(true);
 	}).then(function(objectList) {
 		// all the objects were saved.
 		var createdNewObsIds = [];
