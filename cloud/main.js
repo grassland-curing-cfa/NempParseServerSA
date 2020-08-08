@@ -2918,7 +2918,7 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 		}
 		
 		var createdNewObsIdList = {
-		        "createdNewObsIds": createdNewObsIds
+		    "createdNewObsIds": createdNewObsIds
 		};
 		
 		console.log("Validation By Exception rule applied; New GCUR_OBSERVATION object count = " + countOfObsApplied);
@@ -2926,8 +2926,7 @@ Parse.Cloud.define("applyValidationByException", (request) => {
 		
 		return createdNewObsIdList;
 	}, function(error) {
-		console.log("*** ERROR THROWN");
-		throw new Parse.Error(1001, 'My error') 
+		throw new Parse.Error(1001, 'Error on applyValidationByException: ' + error.toString());
 	});
 });
 
