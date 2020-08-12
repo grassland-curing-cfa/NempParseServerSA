@@ -102,10 +102,10 @@ var validationRequestEmailHtml = '<!DOCTYPE html><html>' +
 			'<br>' + 
 			'<p>Kind Regards,</p>' + 
 			'<br>' + 
-			'<p>The NEMP Grassland Curing Team</p>' + 
+			'<p>The Research and Development Team</p>' + 
 			'<br>' + 
-			'<table><tr><td width="30%"><img src="http://www.cfa.vic.gov.au/img/logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
-			'<td><p style="color:#C00000; font-weight: bold;">NEMP Grassland Curing Team</p><p>CFA HQ - Fire & Emergency Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
+			'<table><tr><td width="30%"><img src="https://cdn.cfa.vic.gov.au/o/cfa-theme/images/cfa-logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
+			'<td><p style="color:#C00000; font-weight: bold;">The Research and Development Team</p><p>CFA HQ - Bushfire Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
 			'<p>E: <a href="mailto:' + CFA_NEMP_EMAIL + '" target="_top">' + CFA_NEMP_EMAIL + '</a></p></td></tr></table>' + 
 			'<br>' + 
 			'<p><i>Note: This email has been generated automatically by ' + process.env.APP_NAME + '. Please do not reply to this email.</i></p>' + 
@@ -121,7 +121,8 @@ Parse.Cloud.define("sendEmailRequestForValidation", (request) => {
 		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
 		
 		var data = {
-			to: toEmails,
+			//to: toEmails,
+			to: 'a.chen@cfa.vic.gov.au',
 			cc: CFA_NEMP_EMAIL,
 			from: CFA_NEMP_EMAIL,
 			subject: "South Australia - Grassland Curing Validation Notification",
