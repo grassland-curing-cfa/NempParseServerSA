@@ -104,7 +104,7 @@ var validationRequestEmailHtml = '<!DOCTYPE html><html>' +
 			'<br>' + 
 			'<p>The Research and Development Team</p>' + 
 			'<br>' + 
-			'<table><tr><td width="30%"><img src="https://cdn.cfa.vic.gov.au/o/cfa-theme/images/cfa-logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
+			'<table><tr><td width="10%"><img src="https://cdn.cfa.vic.gov.au/o/cfa-theme/images/cfa-logo.png" width="64" height="64" alt="CFA_LOGO" /></td>' + 
 			'<td><p style="color:#C00000; font-weight: bold;">The Research and Development Team</p><p>CFA HQ - Bushfire Management - 8 Lakeside Drive, Burwood East, Victoria, 3151</p>' + 
 			'<p>E: <a href="mailto:' + CFA_NEMP_EMAIL + '" target="_top">' + CFA_NEMP_EMAIL + '</a></p></td></tr></table>' + 
 			'<br>' + 
