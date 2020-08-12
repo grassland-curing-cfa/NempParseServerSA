@@ -1,7 +1,7 @@
 /*
  * Cloud code for "nemp-sa-dev" connected to the "nemp_dev_sa" MongoLab DB deployed on Heroku
  * Git repo: 				https://github.com/grassland-curing-cfa/NempParseServerSA
- * Initial checkin date: 		23/02/2016
+ * Initial checkin date: 	23/02/2016
  * Following-up check date:	13/07/2016
 							18/07/2016
 							25/07/2016: added "sendEmailRequestForValidation" function
@@ -15,14 +15,14 @@
 */
 
 var _ = require('underscore');
-var schedule = require('node-schedule');			// https://www.npmjs.com/package/node-schedule
 var turf = require('turf');							// https://www.npmjs.com/package/turf
+const { Error } = require('parse');
 
-var SUPERUSER = process.env.SUPER_USER;
-var SUPERPASSWORD = process.env.SUPER_USER_PASS;
+//var SUPERUSER = process.env.SUPER_USER;
+//var SUPERPASSWORD = process.env.SUPER_USER_PASS;
 var NULL_VAL_INT = -1;
-var NULL_VAL_DBL = -1.0;
- 
+//var NULL_VAL_DBL = -1.0;
+
 var APP_ID = process.env.APP_ID;
 var MASTER_KEY = process.env.MASTER_KEY;
 var SERVER_URL = process.env.SERVER_URL;
@@ -43,13 +43,13 @@ var SUPERUSER_OBJECTID = "ooXLn2wtYR";
 
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
-Parse.Cloud.define("hello", function(request, response) {
-  return "Hello world from " + process.env.APP_NAME;
+Parse.Cloud.define("hello", (request) => {
+	return Promise.resolve("Hello world from " + process.env.APP_NAME);
 });
 
-Parse.Cloud.define("getDateInAEST", function(request, response) {
-    var currentDateInAEST = getTodayString(_IS_DAYLIGHT_SAVING);
-    response.success("_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'");
+Parse.Cloud.define("getDateInAEST", (request) => {
+	var currentDateInAEST = getTodayString(_IS_DAYLIGHT_SAVING);
+	return Promise.resolve("_IS_DAYLIGHT_SAVING is " + _IS_DAYLIGHT_SAVING + "; Current Date in AEST: '" + currentDateInAEST + "'");
 });
 
 Parse.Cloud.define("testMailgunJS", async (request) => {
@@ -112,7 +112,7 @@ var validationRequestEmailHtml = '<!DOCTYPE html><html>' +
 			'</body>' + 
 			'</html>';
 
-Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) {
+Parse.Cloud.define("sendEmailRequestForValidation", (request) => {
 	console.log('Function [sendEmailRequestForValidation] being executed...');
 	
 	if (_IS_FIRE_DANGER_PERIOD) {
@@ -121,7 +121,8 @@ Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) 
 		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
 		
 		var data = {
-			to: toEmails,
+			//to: toEmails,
+			to: 'a.chen@cfa.vic.gov.au',
 			cc: CFA_NEMP_EMAIL,
 			from: CFA_NEMP_EMAIL,
 			subject: "South Australia - Grassland Curing Validation Notification",
@@ -129,18 +130,18 @@ Parse.Cloud.define("sendEmailRequestForValidation", function(request, response) 
 			html: validationRequestEmailHtml
 		};
 
-		mailgun.messages().send(data, function (error, body) {
+		return mailgun.messages().send(data, function (error, body) {
 			if (error) {
 				console.log(error);
-				response.error("" + error);
+				throw new Error("" + error);
 			}
 			else {
 				console.log(body);
-				response.success(body);
+				return "" + body;
 			}
 		});
 	} else
-		response.success("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
+	return Promise.resolve("_IS_FIRE_DANGER_PERIOD: " + _IS_FIRE_DANGER_PERIOD + "; No RequestForValidation email to be sent.");
 });
 
 // Send a "Want to become an observer" email via Mailgun
