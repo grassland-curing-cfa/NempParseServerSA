@@ -53,17 +53,21 @@ Parse.Cloud.define("getDateInAEST", (request) => {
 });
 
 Parse.Cloud.define("testMailgunJS", async (request) => {
-	var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
-	var data = {
-	  from: 'Excited User <me@samples.mailgun.org>',
-	  to: 'a.chen@cfa.vic.gov.au',
-	  bcc: 'tttchen2004@yahoo.com',
-	  subject: 'Hello from ' + process.env.SERVER_URL,
-	  text: '',
-	  html: 'Testing some Mailgun awesomness from <br><h1>' + process.env.SERVER_URL + '</h1>'
-	};
-	const sentFeedback = await mailgun.messages().send(data);
-	return sentFeedback;
+	try {
+		var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
+		var data = {
+		from: 'Excited User <me@samples.mailgun.org>',
+		to: 'a.chen@cfa.vic.gov.au',
+		bcc: 'tttchen2004@yahoo.com',
+		subject: 'Hello from ' + process.env.SERVER_URL,
+		text: '',
+		html: 'Testing some Mailgun awesomness from <br><h1>' + process.env.SERVER_URL + '</h1>'
+		};
+		const sentFeedback = await mailgun.messages().send(data);
+		return sentFeedback;
+	} catch (e) {
+        throw 'Error in sending email via Mailgun. Details: ' + e;
+    }
   });
 
 // Parse.com Job for sending Request for Validation email
