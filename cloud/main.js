@@ -331,7 +331,7 @@ Parse.Cloud.define("exportEmailsForActiveUsers", (request) => {
 });
 
 // export a list of email addresses for recipients that receive the finalsed map email
-Parse.Cloud.define("exportEmailsForManualFinalMapEmail", function(request, response) {
+Parse.Cloud.define("exportEmailsForManualFinalMapEmail", (request) => {
 	// get all active observers, validators and administrators
 	var recipientList = CFA_GL_EMAIL + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP;
 	
@@ -339,7 +339,7 @@ Parse.Cloud.define("exportEmailsForManualFinalMapEmail", function(request, respo
 	queryMMR.include("user");
 	queryMMR.include("role");
 	queryMMR.limit(1000);
-	queryMMR.find({ useMasterKey: true }).then(function(results) {
+	return queryMMR.find({ useMasterKey: true }).then(function(results) {
 		// results is array of GCUR_MMR_USER_ROLE records
 		for (var i = 0; i < results.length; i++) {
 			var role = results[i].get("role");
@@ -356,9 +356,9 @@ Parse.Cloud.define("exportEmailsForManualFinalMapEmail", function(request, respo
 					console.log("Email [" + email + "] already added in recipientList.");
 			}
 		}
-		response.success(recipientList);	
+		return recipientList;	
 	}, function(error) {
-	    response.error("GCUR_MMR_USER_ROLE table lookup failed");
+	    throw new Error("GCUR_MMR_USER_ROLE table lookup failed");
 	});
 });
 
