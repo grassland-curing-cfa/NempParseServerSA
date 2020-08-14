@@ -1949,7 +1949,8 @@ Parse.Cloud.define("getAllAdjByLocDists", async (request) => {
 });
 
 /**
- * Link an observer with locations page; called from the Link Observer with Locations page.
+ * Link an observer with locations page; called from the Link Observer with Locations page
+ * to show all locations that are linked with the observer
  */
 Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", async (request) => {
 	const userObjectId = request.params.objectId;
