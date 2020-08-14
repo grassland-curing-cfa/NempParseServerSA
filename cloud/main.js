@@ -176,8 +176,7 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", (request) => {
 			'</html>';
 	
 	return mailgun.messages().send({
-		  //to: CFA_NEMP_EMAIL,
-		to: "a.chen@cfa.vic.gov.au",
+		to: CFA_NEMP_EMAIL,
 		from: CFA_NEMP_EMAIL,
         subject: "Express of Interest to become a grassland curing observer",
       	text: '',
