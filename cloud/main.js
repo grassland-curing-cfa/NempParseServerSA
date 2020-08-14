@@ -148,7 +148,7 @@ Parse.Cloud.define("sendEmailRequestForValidation", (request) => {
 });
 
 // Send a "Want to become an observer" email via Mailgun
-Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) {
+Parse.Cloud.define("sendEmailWantToBecomeObserver", (request) => {
 	var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
 
 	var firstname = request.params.fn;
@@ -175,17 +175,18 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", function(request, response) 
 			'</body>' + 
 			'</html>';
 	
-	mailgun.messages().send({
-      	to: CFA_NEMP_EMAIL,
+	return mailgun.messages().send({
+		  //to: CFA_NEMP_EMAIL,
+		to: "a.chen@cfa.vic.gov.au"
 		from: CFA_NEMP_EMAIL,
         subject: "Express of Interest to become a grassland curing observer",
       	text: '',
       	html: html
     }, function (error, body) {
       if (error)
-  		response.error("" + error);
+  		throw new Error(error);
       else
-        	response.success(body);
+        return body;
     });
 });
 
