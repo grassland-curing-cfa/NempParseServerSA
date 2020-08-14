@@ -285,9 +285,8 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", (request) => {
 					'</html>';
 		
 		return mailgun.messages().send({
-			to: "a.chen@cfa.vic.gov.au",
-			//to: CFA_NEMP_EMAIL,
-			//bcc: recipientList,
+			to: CFA_NEMP_EMAIL,
+			bcc: recipientList,
 			from: CFA_NEMP_EMAIL,
 			subject: "South Australia Grassland Curing Map - " + strToday,
 			text: "",
