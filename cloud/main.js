@@ -190,7 +190,7 @@ Parse.Cloud.define("sendEmailWantToBecomeObserver", (request) => {
 });
 
 //Send a "Welcome email to new user upon signed-up" via Mailgun
-Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
+Parse.Cloud.define("sendEmailWelcomeNewUser", (request) => {
 	var mailgun = require('mailgun-js')({apiKey: MG_KEY, domain: MG_DOMAIN});
 	
 	var firstname = request.params.fn;
@@ -231,18 +231,18 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", function(request, response) {
 				'</body>' + 
 				'</html>';
 	
-	mailgun.messages().send({
-	  to: email,
-	  bcc: CFA_NEMP_EMAIL,
-	  from: CFA_NEMP_EMAIL,
-	  subject: "Welcome to the South Australia " + process.env.APP_NAME,
-	  text: "",
-	  html: html
-    }, function (error, body) {
-      if (error)
-        response.error("" + error);    
-      else
-        response.success(body);
+	return mailgun.messages().send({
+		to: email,
+		bcc: CFA_NEMP_EMAIL,
+		from: CFA_NEMP_EMAIL,
+		subject: "Welcome to the South Australia " + process.env.APP_NAME,
+		text: "",
+		html: html
+	}, function (error, body) {
+		if (error)
+			throw new Error(error);
+		else
+			return body;
     });
 })
 
