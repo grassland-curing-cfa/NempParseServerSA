@@ -247,7 +247,7 @@ Parse.Cloud.define("sendEmailWelcomeNewUser", (request) => {
 })
 
 //Send a "finalised map" email to all active observers, validators and administrators via Mailgun
-Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) {
+Parse.Cloud.define("sendEmailFinalisedDataToUsers", (request) => {
 	// get all active observers, validators and administrators
 	var recipientList = CFA_GL_EMAIL + ";" + process.env.ADDITIONAL_EMAILS_FOR_FINALISED_MAP;
 	
@@ -255,7 +255,7 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) 
 	queryMMR.include("user");
 	//queryMMR.include("role");
 	queryMMR.limit(1000);
-	queryMMR.find({ useMasterKey: true }).then(function(results) {
+	return queryMMR.find({ useMasterKey: true }).then(function(results) {
 		// results is array of GCUR_MMR_USER_ROLE records
 		for (var i = 0; i < results.length; i++) {
 			//var role = results[i].get("role");
@@ -284,21 +284,19 @@ Parse.Cloud.define("sendEmailFinalisedDataToUsers", function(request, response) 
 					'</body>' + 
 					'</html>';
 		
-		mailgun.messages().send({
-			to: CFA_NEMP_EMAIL,
-			bcc: recipientList,
+		return mailgun.messages().send({
+			to: "a.chen@cfa.vic.gov.au",
+			//to: CFA_NEMP_EMAIL,
+			//bcc: recipientList,
 			from: CFA_NEMP_EMAIL,
 			subject: "South Australia Grassland Curing Map - " + strToday,
 			text: "",
 			html: html
-		}, function (error, body) {
-			if (error)
-				response.error("" + error);    
-			else
-				response.success("Email sent. Details: " + JSON.stringify(body));
 		});
+	}).then(function(body) {
+		return "Email sent. Details: " + JSON.stringify(body);
 	}, function(error) {
-		response.error("GCUR_MMR_USER_ROLE table lookup failed");
+		throw new Error("GCUR_MMR_USER_ROLE table lookup failed");
 	});
 });
 
