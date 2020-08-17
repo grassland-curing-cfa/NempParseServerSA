@@ -2337,7 +2337,7 @@ Parse.Cloud.define("getAdjustedCuringForLocations", async (request) => {
 		locAdjustedCuringList.push(locAdjustedCuringObj);
 	}
 
-	console.log(locAdjustedCuringList);
+	//console.log(locAdjustedCuringList);
 	return locAdjustedCuringList;	
 });
 
