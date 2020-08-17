@@ -1003,32 +1003,28 @@ Parse.Cloud.afterDelete(Parse.User, function(request) {
 /**
  * Removes the associated file uploaded before the Run Model record is deleted
  */
-Parse.Cloud.beforeDelete("GCUR_RUNMODEL", function(request, response) {
+Parse.Cloud.beforeDelete("GCUR_RUNMODEL", async (request) => {
   // Checks if "viscaFile" has a value
   if (request.object.has("viscaFile")) {
 
-    var file = request.object.get("viscaFile");
-    var fileName = file.name();
-    console.log(file.name());
-    Parse.Cloud.httpRequest({
-      method: 'DELETE',
-      url: SERVER_URL + "/files/" + fileName,
-      headers: {
-        "X-Parse-Application-Id": APP_ID,
-        "X-Parse-Master-Key" : MASTER_KEY
-      },
-      success: function(httpResponse) {
-        console.log('Deleted the file associated with the RunModel job successfully.');
-        response.success();
-      },
-      error: function(httpResponse) {
-        console.error('Delete failed with response code ' + httpResponse.status + ':' + httpResponse.text);
-        response.error()
-      }
-    });
+    const file = request.object.get("viscaFile");
+    const fileName = file.name();
+	console.log(fileName);
+	
+    const httpResponse = await Parse.Cloud.httpRequest({
+		method: 'DELETE',
+		url: SERVER_URL + "/files/" + fileName,
+		headers: {
+			"X-Parse-Application-Id": APP_ID,
+			"X-Parse-Master-Key" : MASTER_KEY
+		}
+	});
+	  
+	console.log('Deleted the file associated with the RunModel job successfully.');
+	return true;
   } else {
     console.log('GCUR_RUNMODEL object to be deleted does not have an associated viscaFile (File). No viscaFile to be deleted.');
-    response.success();
+    return true;
   }
 });
 
@@ -1095,13 +1091,15 @@ Parse.Cloud.define("deleteRunModelById", function(request, response) {
 
 /**
  * Retrieve a list RunModel jobs by a list of ObjectIds
+ * Called by adminTools.jsp
+ * action=RefreshIncompleteRunModelJobsDetailsByAjax&objectIds=
  */
-Parse.Cloud.define("getRunModelDetails", function(request, response) {
+Parse.Cloud.define("getRunModelDetails", (request) => {
 	var inRunModelObjList = [];
 	var outRunModelDetails = [];
 	
 	for (var i = 0; i < request.params.runModelObjIds.length; i ++) {
-		console.log("Getting RunModel Details for ObjectId [" + request.params.runModelObjIds[i]["objectId"] + "]");
+		//console.log("Getting RunModel Details for ObjectId [" + request.params.runModelObjIds[i]["objectId"] + "]");
 		inRunModelObjList.push(request.params.runModelObjIds[i]["objectId"]);
 	}
 	
@@ -1110,7 +1108,7 @@ Parse.Cloud.define("getRunModelDetails", function(request, response) {
 	queryRunModel.containedIn("objectId", inRunModelObjList);
 	queryRunModel.include("submittedBy");	// Retrieve _USER
 	queryRunModel.limit(1000);
-	queryRunModel.find({ useMasterKey: true }).then(function(results) {
+	return queryRunModel.find({ useMasterKey: true }).then(function(results) {
 		for (var j = 0; j < results.length; j ++) {
 			var objectId = results[j].id;
 			var createdAt = results[j].createdAt;
@@ -1141,9 +1139,9 @@ Parse.Cloud.define("getRunModelDetails", function(request, response) {
 	        
 	        outRunModelDetails.push(jobDetail);
 		}
-		return response.success(outRunModelDetails);
+		return outRunModelDetails;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
