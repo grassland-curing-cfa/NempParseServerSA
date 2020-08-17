@@ -2545,16 +2545,17 @@ Parse.Cloud.define("finaliseDataOnParse", (request) => {
 /**
  * Retrieve all Finalise Date based on the "createdAt" column of the GCUR_FINALISEMODEL class
  */
-Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
+Parse.Cloud.define("getAllFinalisedDate", (request) => {
 	var finaliseModelList = [];
 	
+	// Get the "createdAt" column
 	var queryFinaliseModel = new Parse.Query("GCUR_FINALISEMODEL");
 	queryFinaliseModel.ascending("createdAt");
 	queryFinaliseModel.equalTo("jobResult", true);
 	queryFinaliseModel.select("jobResult");
 	queryFinaliseModel.limit(1000);
 	
-	queryFinaliseModel.find().then(function(results) {
+	return queryFinaliseModel.find().then(function(results) {
 		for (var i = 0; i < results.length; i ++) {
 			var finaliseModel = results[i];
 			
@@ -2571,9 +2572,9 @@ Parse.Cloud.define("getAllFinalisedDate", function(request, response) {
 			finaliseModelList.push(finaliseModelObj);
 		}
 	}).then(function() {
-	    response.success(finaliseModelList);
+	    return finaliseModelList;
 	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	});
 });
 
