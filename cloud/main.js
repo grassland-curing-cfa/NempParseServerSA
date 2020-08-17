@@ -2226,7 +2226,7 @@ Parse.Cloud.define("getAdjustedCuringForAllDistricts", async (request) => {
 /**
  * Called from Submit click on saveAdjustByDistrictValues JS function on the adminTools.jsp page.
  */
-Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", function(request, response) {
+Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", (request) => {
 	
 	/*
 	 * An example of request parameter
@@ -2243,7 +2243,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", function(request, respo
 	var queryDistrict = new Parse.Query("GCUR_ADJUST_DISTRICT");
 	queryDistrict.limit(1000);
 	queryDistrict.equalTo("status", 0);	// All current GCUR_ADJUST_DISTRICT records
-	queryDistrict.find().then(function(results) {
+	return queryDistrict.find().then(function(results) {
 		
 		// Do remove about all current GCUR_ADJUST_DISTRICT records
 		return Parse.Object.destroyAll(results);
@@ -2268,7 +2268,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", function(request, respo
 			AdjustDistrictsToBeSaved.push(newAdjustDistrict);
 		}
 		
-		return Parse.Object.saveAll(AdjustDistrictsToBeSaved);
+		return Parse.Object.saveAll(AdjustDistrictsToBeSaved, { useMasterKey: true });
 	}, function(error) {
 		// ERROR ON destroyAll()
 		// An error occurred while deleting one or more of the objects.
@@ -2284,7 +2284,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustDistrict", function(request, respo
 	        console.log("Delete aborted because of " + error.message);
 	      }
 	      
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	}).then(function(objectList) {
 		// all the new GCUR_ADJUST_DISTRICT objects were saved.
 		var newAdjustDistrictIds = [];
@@ -2344,7 +2344,7 @@ Parse.Cloud.define("getAdjustedCuringForLocations", async (request) => {
 /**
  * Called from Submit click on saveAdjustByLocationValues JS function on the adminTools.jsp page.
  */
-Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, response) {
+Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", (request) => {
 	
 	/*
 	 * An example of request parameter
@@ -2354,19 +2354,19 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, respo
 	 * 	{"status":0,"adjustedCuring":60,"adjustedDistance":72,"locObjId":"CvyfGSYArB"}]
 	 * }
 	 */
-	
+	console.log("*** Cloud fucntion createUpdateCurrGCURAdjustLocation called");
 	var newAdjustByLocationObjs = request.params.newAdjustByLocationObjs;
 	
 	// Remove all the existing current GCUR_ADJUST_LOCATION records from the GCUR_ADJUST_LOCATION class
 	var queryLocation = new Parse.Query("GCUR_ADJUST_LOCATION");
 	queryLocation.limit(1000);
 	queryLocation.equalTo("status", 0);	// All current GCUR_ADJUST_LOCATION records
-	queryLocation.find().then(function(results) {
+	return queryLocation.find().then(function(results) {
 		
 		// Do remove about all current GCUR_ADJUST_LOCATION records
 		return Parse.Object.destroyAll(results);
 	}).then(function() {
-		console.log("All current GCUR_ADJUST_LOCATION (status = 0) records have been successfully deleted");
+		//console.log("All current GCUR_ADJUST_LOCATION (status = 0) records have been successfully deleted");
 		
 		var AdjustLocationsToBeSaved = [];
 		
@@ -2376,7 +2376,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, respo
 			var adjustedDistance = newAdjustByLocationObjs[j]["adjustedDistance"];
 			var status = newAdjustByLocationObjs[j]["status"];
 			
-			console.log("New AdjustByLocation to be added - [" + locObjId + "]: " + adjustedCuring + ", " + adjustedDistance + ", " + status);
+			//console.log("New AdjustByLocation to be added - [" + locObjId + "]: " + adjustedCuring + ", " + adjustedDistance + ", " + status);
 			
 			var GCUR_LOCATION = Parse.Object.extend("GCUR_LOCATION");
 			var location = new GCUR_LOCATION();
@@ -2392,7 +2392,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, respo
 			AdjustLocationsToBeSaved.push(newAdjustLocation);
 		}
 		
-		return Parse.Object.saveAll(AdjustLocationsToBeSaved);
+		return Parse.Object.saveAll(AdjustLocationsToBeSaved, { useMasterKey: true });
 	}, function(error) {
 		// ERROR ON destroyAll()
 		// An error occurred while deleting one or more of the objects.
@@ -2408,7 +2408,7 @@ Parse.Cloud.define("createUpdateCurrGCURAdjustLocation", function(request, respo
 	        console.log("Delete aborted because of " + error.message);
 	      }
 	      
-		response.error("Error: " + error.code + " " + error.message);
+		throw new Error("Error: " + error.code + " " + error.message);
 	}).then(function(objectList) {
 		// all the new GCUR_ADJUST_LOCATION objects were saved.
 		var newAdjustLocationIds = [];
