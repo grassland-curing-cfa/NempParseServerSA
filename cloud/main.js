@@ -3120,7 +3120,7 @@ Parse.Cloud.define("automateFinaliseData", (request) => {
 	// This is for double check to be more secure that we are not adding a FinaliseData job if RunModels were not successful.
 	var queryRunModel = new Parse.Query("GCUR_RUNMODEL");
 	queryRunModel.greaterThan("createdAt", greaterThanDt);
-	queryRunModel.find().then(function(results) {
+	return queryRunModel.find().then(function(results) {
 		
 		switch (results.length) {
 		
