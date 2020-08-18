@@ -400,18 +400,17 @@ Parse.Cloud.define("countOfObservations", async (request) => {
 	return countOfObs;
 });
 
-Parse.Cloud.define("isLocationNameExist", function(request, response) {
-  var query = new Parse.Query("GCUR_LOCATION");
-  query.equalTo("LocationName", request.params.locationName);
-  query.limit(1000);
-  query.find().then(function(results) {
-    if (results.length > 0)
-      response.success(results[0]);
+Parse.Cloud.define("isLocationNameExist", async (request) => {
+	const query = new Parse.Query("GCUR_LOCATION");
+    query.equalTo("LocationName", request.params.locationName);
+    query.limit(1000);
+    const results = await query.find(); {
+	
+	if (results.length > 0)
+    	return results[0];
     else
-      response.success(new Object());
-  }, function(error) {
-    response.error("Location table lookup failed");
-  });
+    	return new Object();
+    }
 });
 
 Parse.Cloud.define("deleteUserByUsername", function(request, response) {
