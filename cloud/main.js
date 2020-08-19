@@ -11,7 +11,8 @@
 							01/12/2016: NEMP-1-154: Running the "applyValidationByException" Cloud function creates incorrect String on the "SharedBy" column of the GCUR_OBSERVATION table
 										NEMP-1-151: Remove unnecessary Parse.User.logIn(SUPERUSER, SUPERPASSWORD) and Parse.Cloud.useMasterKey() in the Cloud function
 							30/08/2018: Created two cloud functions: "automateRunModel" & "automateFinaliseData" on the Parse Server for automating RunModel and FinaliseData jobs
-							28/07/2020: Started to upgrade code to Parse-server 3.0+ 
+							28/07/2020: Started to upgrade code to Parse-server 3.0+
+							19/08/2020: Finished upgrading all Cloud functions to Parse-server 3.0+.
 */
 
 var _ = require('underscore');
@@ -38,8 +39,6 @@ var _MAX_DAYS_ALLOWED_FOR_PREVIOUS_OBS = process.env.MAX_DAYS_ALLOWED_FOR_PREVIO
 
 var RESOLUTIONS = ["500", "6000"];
 var SUPERUSER_OBJECTID = "ooXLn2wtYR";
-
-//var SHARED_WITH_STATES = ["VIC", "QLD", "NSW"];
 
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
@@ -2583,7 +2582,7 @@ Parse.Cloud.define("getAllFinalisedDate", (request) => {
 /**
  * Get the downloadable observation report based on user-specified finalised model objectId
  */
-Parse.Cloud.define("getDataReport", function(request, response) {
+Parse.Cloud.define("getDataReport", (request) => {
 	var finalisedModelObjectId = request.params.finalisedModelObjectId;
 	
 	var returnedObsList = [];
@@ -3304,76 +3303,6 @@ Parse.Cloud.define("automateFinaliseData", (request) => {
 		throw new Parse.Error(1001, {"ToCreate": ToCreate, 'executionMsg': executionMsg, 'isJobAdded': isJobAdded, 'error': error});
 	});
 });
-
-/*
-Parse.Cloud.define("finaliseAdjustByDistAndLocOnParse", function(request, response) {
-	Parse.Cloud.useMasterKey();
-	
-	// Change all GCUR_ADJUST_DISTRICT records with status being 1 to 2
-	queryPrev = new Parse.Query("GCUR_ADJUST_DISTRICT");
-	queryPrev.equalTo("status", 1);
-	queryPrev.limit(1000);
-	queryPrev.find().then(function(prev_adjustDistricts) {
-		for (var i = 0; i < prev_adjustDistricts.length; i ++) {
-			var abd = prev_adjustDistricts[i];
-			abd.set("status", 2);
-		}
-		return Parse.Object.saveAll(prev_adjustDistricts);
-	}).then(function() {
-		console.log("All GCUR_ADJUST_DISTRICT records with status being 1 have been succssfully changed to archived records.");
-		
-		// Find all current GCUR_ADJUST_DISTRICT records with status being 0
-		queryCurr = new Parse.Query("GCUR_ADJUST_DISTRICT");
-		queryCurr.equalTo("status", 0);
-		queryCurr.limit(1000);
-		return queryCurr.find();
-	}).then(function(curr_adjustDistricts) {
-		for (var i = 0; i < curr_adjustDistricts.length; i ++) {
-			var abd = curr_adjustDistricts[i];
-			
-			// Set current to previous
-			abd.set("status", 1);
-		}
-		return Parse.Object.saveAll(curr_adjustDistricts);
-	}).then(function(list) {
-		console.log("All current GCUR_ADJUST_DISTRICT records have been succssfully updated to previous records.");
-		
-		// Change all GCUR_ADJUST_LOCATION records with status being 1 to 2
-		queryPrev = new Parse.Query("GCUR_ADJUST_LOCATION");
-		queryPrev.equalTo("status", 1);
-		queryPrev.limit(1000);
-		return queryPrev.find();
-	}).then(function(prev_adjustLocations) {
-		for (var i = 0; i < prev_adjustLocations.length; i ++) {
-			var abl = prev_adjustLocations[i];
-			abl.set("status", 2);
-		}
-		return Parse.Object.saveAll(prev_adjustLocations);
-	}).then(function() {
-		console.log("All GCUR_ADJUST_LOCATION records with status being 1 have been succssfully changed to archived records.");
-		
-		// Find all current GCUR_ADJUST_LOCATION records with status being 0
-		queryCurr = new Parse.Query("GCUR_ADJUST_LOCATION");
-		queryCurr.equalTo("status", 0);
-		queryCurr.limit(1000);
-		return queryCurr.find();
-	}).then(function(curr_adjustLocations) {
-		for (var i = 0; i < curr_adjustLocations.length; i ++) {
-			var abl = curr_adjustLocations[i];
-			
-			// Set current to previous
-			abl.set("status", 1);
-		}
-		return Parse.Object.saveAll(curr_adjustLocations);
-	}).then(function(list) {
-		// All the objects were saved.
-		console.log("All current GCUR_ADJUST_LOCATION records have been succssfully updated to previous records.");
-		response.success();  //saveAll is now finished and we can properly exit with confidence :-)
-	}, function(error) {
-		response.error("Error: " + error.code + " " + error.message);
-	});
-});
-*/
 
 /**
  * An Underscore utility function to find elements in array that are not in another array;
