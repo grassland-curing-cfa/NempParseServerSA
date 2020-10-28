@@ -1986,7 +1986,7 @@ Parse.Cloud.define("getAllLocationsWithLinkedStatusForObservers", async (request
 	const queryMMR = new Parse.Query("GCUR_MMR_OBSERVER_LOCATION");
 	queryMMR.include("Observer");
 	queryMMR.include("Location");
-	queryMMR.limit(1000);
+	//queryMMR.limit(1000);
 	const mmrResults = await queryMMR.find({ useMasterKey: true });
 
 	for (let i = 0; i < mmrResults.length; i++) {
